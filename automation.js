@@ -412,15 +412,15 @@ async function run() {
         page.waitForNavigation({ waitUntil: 'load' }),
         page.press('#post-search-input', 'Enter')
       ]);
-      const rowTitle = page.locator('a.row-title').first();
-      await rowTitle.hover();
-      const editLink = page.locator('.row-actions .edit a').first();
-      if (await editLink.isVisible()) {
-        await editLink.click();
+      const editLinkLocator = page.locator('.row-actions .edit a, a.row-title').first();
+      const editPageUrl = await editLinkLocator.getAttribute('href');
+      if (editPageUrl) {
+        const absoluteEditUrl = editPageUrl.startsWith('http') ? editPageUrl : `${adminOrigin}${editPageUrl}`;
+        console.log(`Found direct Edit Page URL: ${absoluteEditUrl}. Navigating directly...`);
+        await page.goto(absoluteEditUrl, { waitUntil: 'load' });
       } else {
-        await rowTitle.click();
+        throw new Error("Could not find Edit Page link in search results.");
       }
-      await page.waitForSelector('#poststuff, .block-editor-page, .elementor-editor-active', { timeout: 30000 });
     }
 
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, '3_page_editor.png') });
