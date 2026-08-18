@@ -213,6 +213,8 @@ async function run() {
       const locator = page.locator(field.selector);
       let liveValue = '';
       if (await locator.count() > 0) {
+        await locator.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(300);
         liveValue = await locator.inputValue();
       }
       

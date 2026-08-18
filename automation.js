@@ -456,21 +456,27 @@ async function run() {
         if (!value) return;
         console.log(`Setting field: "${fieldConf.label}" -> "${value.substring(0, 35)}..."`);
         
-        if (fieldConf.selector && await page.locator(fieldConf.selector).first().isVisible()) {
-          await page.fill(fieldConf.selector, value);
+        if (fieldConf.selector && await page.locator(fieldConf.selector).first().count().catch(() => 0) > 0) {
+          const locator = page.locator(fieldConf.selector).first();
+          await locator.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(300);
+          await locator.fill(value);
           return;
         }
         
         const labelLocator = page.locator(`label:has-text("${fieldConf.label}")`);
-        if (await labelLocator.first().isVisible()) {
-          const labelFor = await labelLocator.first().getAttribute('for');
+        if (await labelLocator.first().count().catch(() => 0) > 0) {
+          const locator = labelLocator.first();
+          await locator.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(300);
+          const labelFor = await locator.getAttribute('for');
           if (labelFor) {
             await page.fill(`#${labelFor}`, value);
             return;
           }
-          const container = labelLocator.first().locator('xpath=..');
+          const container = locator.locator('xpath=..');
           const input = container.locator('input, textarea, [contenteditable="true"]').first();
-          if (await input.isVisible()) {
+          if (await input.count().catch(() => 0) > 0) {
             await input.fill(value);
             return;
           }
