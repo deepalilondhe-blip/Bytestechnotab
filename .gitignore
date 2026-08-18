@@ -1,0 +1,22 @@
+# Node.js dependencies
+node_modules/
+package-lock.json
+
+# Environment variables (contains credentials)
+.env
+
+# Diagnostic dumps and logs
+wp_fields_dump.txt
+loginform_html.txt
+loginform_text.txt
+login_page_inspect.png
+check_home_env.js
+check_env.js
+test_basic_auth.js
+test_wp_login.js
+
+# Output directories
+screenshots/
+reports/
+editor_view.png
+login_page_inspect.png
