@@ -65,20 +65,12 @@ function solveCaptcha(equationText) {
 async function run() {
   console.log('Starting editor field inspector...');
   
-  const browser = await chromium.launch({ headless: true });
-  const contextOptions = {};
-  if (HTTP_BASIC_AUTH_USER && HTTP_BASIC_AUTH_PASS) {
-    contextOptions.httpCredentials = {
-      username: HTTP_BASIC_AUTH_USER,
-      password: HTTP_BASIC_AUTH_PASS
-    };
-  }
-  
-  const context = await browser.newContext(contextOptions);
-  const page = await context.newPage();
+  const browser = await chromium.connectOverCDP('http://localhost:9222');
+  const context = browser.contexts()[0];
+  const page = context.pages()[0] || await context.newPage();
   
   try {
-    console.log(`Navigating to login page: ${WP_ADMIN_URL}`);
+    console.log(`Checking WordPress Admin login status...`);
     await page.goto(WP_ADMIN_URL, { waitUntil: 'load' });
     
     if (await page.locator('#user_login').isVisible()) {
@@ -104,16 +96,20 @@ async function run() {
     }
     
     console.log('Login successful. Navigating to page editor...');
-    // Search for "Product Strategy" page
-    await page.goto(`${path.dirname(WP_ADMIN_URL)}/edit.php?post_type=page`);
+    const adminOrigin = new URL(WP_ADMIN_URL).origin;
+    await page.goto(`${adminOrigin}/wp-admin/edit.php?post_type=page`);
     await page.fill('#post-search-input', 'Product Strategy');
-    await page.press('#post-search-input', 'Enter');
-    await page.waitForLoadState('load');
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'load' }),
+      page.press('#post-search-input', 'Enter')
+    ]);
     
-    const editLink = page.locator('a.row-title').first();
-    if (await editLink.isVisible()) {
-      await editLink.click();
-      await page.waitForLoadState('load');
+    const editLinkLocator = page.locator('.row-actions .edit a, a.row-title').first();
+    const editPageUrl = await editLinkLocator.getAttribute('href');
+    if (editPageUrl) {
+      const absoluteEditUrl = editPageUrl.startsWith('http') ? editPageUrl : `${adminOrigin}${editPageUrl}`;
+      console.log(`Found direct Edit Page URL: ${absoluteEditUrl}. Navigating directly...`);
+      await page.goto(absoluteEditUrl, { waitUntil: 'load' });
       console.log('Inside page editor.');
       
       // Screenshot of editor
