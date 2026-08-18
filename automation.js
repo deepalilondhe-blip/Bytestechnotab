@@ -265,18 +265,24 @@ async function run() {
   let context;
   let page;
   let isConnectedOverCDP = false;
+  const useCDP = process.env.USE_CDP === 'true';
+  if (useCDP) {
+    console.log('\nChecking for running Chrome instance on port 9222 (remote debugging)...');
+    try {
+      browser = await chromium.connectOverCDP('http://localhost:9222', { timeout: 3000 });
+      console.log('✓ Connected successfully to running Chrome browser!');
+      isConnectedOverCDP = true;
+      context = browser.contexts()[0];
+      page = context.pages()[0] || await context.newPage();
+    } catch (cdpErr) {
+      console.log('No running Chrome browser detected on port 9222. Falling back to launching new browser...');
+    }
+  }
 
-  console.log('\nChecking for running Chrome instance on port 9222 (remote debugging)...');
-  try {
-    browser = await chromium.connectOverCDP('http://localhost:9222', { timeout: 3000 });
-    console.log('✓ Connected successfully to running Chrome browser!');
-    isConnectedOverCDP = true;
-    context = browser.contexts()[0];
-    page = context.pages()[0] || await context.newPage();
-  } catch (cdpErr) {
-    console.log('No running Chrome browser detected on port 9222. Launching new browser...');
+  if (!isConnectedOverCDP) {
+    console.log('Launching a new headed Chrome browser instance...');
     browser = await chromium.launch({
-      headless: config.options.headless,
+      headless: false,
       channel: 'chrome',
       args: [
         '--disable-blink-features=AutomationControlled',
@@ -520,8 +526,14 @@ async function run() {
     pageResult.error = err.message;
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'error_state.png') }).catch(() => {});
   } finally {
-    console.log('\nClosing browser context...');
-    await browser.close();
+    if (browser) {
+      if (isConnectedOverCDP) {
+        console.log('\nClosing browser context...');
+        await browser.close();
+      } else {
+        console.log('\nAutomation run complete. Leaving Chrome browser open for you to inspect.');
+      }
+    }
     
     results.push(pageResult);
     saveReport(results);

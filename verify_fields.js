@@ -80,10 +80,45 @@ async function run() {
   console.log(`Parsing source file: ${SOURCE_FILE}...`);
   const parsedData = await parseFile(SOURCE_FILE);
   
-  console.log('Connecting to active Chrome browser on port 9222...');
-  const browser = await chromium.connectOverCDP('http://localhost:9222');
-  const context = browser.contexts()[0];
-  const page = context.pages()[0] || await context.newPage();
+  let browser;
+  let context;
+  let page;
+  let isConnectedOverCDP = false;
+
+  const useCDP = process.env.USE_CDP === 'true';
+  if (useCDP) {
+    console.log('Connecting to active Chrome browser on port 9222...');
+    try {
+      browser = await chromium.connectOverCDP('http://localhost:9222', { timeout: 3000 });
+      isConnectedOverCDP = true;
+      context = browser.contexts()[0];
+      page = context.pages()[0] || await context.newPage();
+    } catch (cdpErr) {
+      console.log('No running Chrome browser detected on port 9222. Falling back to launching new browser...');
+    }
+  }
+
+  if (!isConnectedOverCDP) {
+    console.log('Launching a new headed Chrome browser instance...');
+    browser = await chromium.launch({
+      headless: false,
+      channel: 'chrome',
+      args: [
+        '--disable-blink-features=AutomationControlled',
+        '--disable-web-security'
+      ]
+    });
+    
+    const contextOptions = {
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      viewport: { width: 1280, height: 720 },
+      locale: 'en-US',
+      deviceScaleFactor: 1
+    };
+    
+    context = await browser.newContext(contextOptions);
+    page = await context.newPage();
+  }
   
   try {
     console.log(`Navigating to: ${WP_ADMIN_URL}`);
@@ -197,7 +232,13 @@ async function run() {
   } catch (err) {
     console.error('Error during field verification:', err.message);
   } finally {
-    await browser.close();
+    if (browser) {
+      if (isConnectedOverCDP) {
+        await browser.close();
+      } else {
+        console.log('\nVerification complete. Leaving Chrome browser open for you to inspect.');
+      }
+    }
   }
 }
 
