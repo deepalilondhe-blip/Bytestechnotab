@@ -251,6 +251,10 @@ async function run() {
     
   } catch (err) {
     console.error('Error during field verification:', err.message);
+    if (page) {
+      await page.screenshot({ path: './verify_error_state.png' }).catch(() => {});
+      console.log('Saved error screenshot to verify_error_state.png');
+    }
   } finally {
     if (browser) {
       if (isConnectedOverCDP) {
