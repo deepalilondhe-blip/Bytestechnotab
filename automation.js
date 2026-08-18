@@ -511,6 +511,10 @@ async function run() {
         const listStr = parsedData.technologies.list.map(t => `* ${t}`).join('\n');
         await updateField(config.selectors.fields.technologies.list, listStr);
       }
+      
+      console.log('Scrolling to the end of the page...');
+      await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }));
+      await page.waitForTimeout(1000);
 
       // Save changes
       console.log('\nSaving page modifications...');

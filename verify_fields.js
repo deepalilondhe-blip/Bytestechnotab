@@ -234,6 +234,10 @@ async function run() {
       report += '--------------------------------------------------\n';
     }
     
+    console.log('Scrolling to the end of the page...');
+    await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }));
+    await page.waitForTimeout(1000);
+    
     report += `\nVerification Summary:\n`;
     report += `Total Fields Checked: ${fieldsToVerify.length}\n`;
     report += `Mismatched Fields:   ${mismatchCount}\n`;
