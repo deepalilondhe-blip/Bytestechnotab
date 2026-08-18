@@ -10,7 +10,7 @@ dotenv.config();
 const WP_ADMIN_URL = process.env.WP_ADMIN_URL || 'https://staging.bytestechnolab.com/HjiMvLE1D6ycKpE/';
 const WP_USERNAME = process.env.WP_USERNAME || '';
 const WP_PASSWORD = process.env.WP_PASSWORD || '';
-const SEARCH_QUERY = 'The Best Products Start with Better';
+const SEARCH_QUERY = 'Product Strategy';
 const SOURCE_FILE = './content.md';
 
 const wordsToNumbers = {
