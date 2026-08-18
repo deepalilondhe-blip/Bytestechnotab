@@ -409,7 +409,8 @@ async function run() {
       await page.goto(editPageUrl, { waitUntil: 'load' });
     } else {
       console.log('⚠️ Admin bar Edit Page link not visible. Navigating to standard post editor list...');
-      await page.goto(`${path.dirname(WP_ADMIN_URL)}/edit.php?post_type=page`);
+      const adminOrigin = new URL(WP_ADMIN_URL).origin;
+      await page.goto(`${adminOrigin}/wp-admin/edit.php?post_type=page`);
       await page.fill('#post-search-input', 'Product Strategy');
       await page.press('#post-search-input', 'Enter');
       await page.locator('a.row-title').first().click();
