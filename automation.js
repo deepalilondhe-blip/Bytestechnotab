@@ -412,7 +412,14 @@ async function run() {
         page.waitForNavigation({ waitUntil: 'load' }),
         page.press('#post-search-input', 'Enter')
       ]);
-      await page.locator('a.row-title').first().click();
+      const rowTitle = page.locator('a.row-title').first();
+      await rowTitle.hover();
+      const editLink = page.locator('.row-actions .edit a').first();
+      if (await editLink.isVisible()) {
+        await editLink.click();
+      } else {
+        await rowTitle.click();
+      }
       await page.waitForSelector('#poststuff, .block-editor-page, .elementor-editor-active', { timeout: 30000 });
     }
 
