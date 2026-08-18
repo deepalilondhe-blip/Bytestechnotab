@@ -10,6 +10,8 @@ dotenv.config();
 const WP_ADMIN_URL = process.env.WP_ADMIN_URL || 'https://staging.bytestechnolab.com/HjiMvLE1D6ycKpE/';
 const WP_USERNAME = process.env.WP_USERNAME || '';
 const WP_PASSWORD = process.env.WP_PASSWORD || '';
+const HTTP_BASIC_AUTH_USER = process.env.HTTP_BASIC_AUTH_USER || '';
+const HTTP_BASIC_AUTH_PASS = process.env.HTTP_BASIC_AUTH_PASS || '';
 const SEARCH_QUERY = 'Product Strategy';
 const SOURCE_FILE = './content.md';
 
@@ -115,6 +117,14 @@ async function run() {
       locale: 'en-US',
       deviceScaleFactor: 1
     };
+    
+    if (HTTP_BASIC_AUTH_USER && HTTP_BASIC_AUTH_PASS) {
+      console.log('Setting HTTP Basic Authentication credentials...');
+      contextOptions.httpCredentials = {
+        username: HTTP_BASIC_AUTH_USER,
+        password: HTTP_BASIC_AUTH_PASS
+      };
+    }
     
     context = await browser.newContext(contextOptions);
     page = await context.newPage();
