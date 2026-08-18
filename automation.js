@@ -506,29 +506,61 @@ async function run() {
       }
 
       // Fill in mapped sections
-      await updateField(config.selectors.fields.banner.title, parsedData.banner.title);
-      await updateField(config.selectors.fields.banner.subtitle, parsedData.banner.subtitle);
-      await updateField(config.selectors.fields.banner.bottomRightTitle, parsedData.banner.bottomRightTitle);
+      if (config.selectors.fields.banner?.title) {
+        await updateField(config.selectors.fields.banner.title, parsedData.banner.title);
+      }
+      if (config.selectors.fields.banner?.subtitle) {
+        await updateField(config.selectors.fields.banner.subtitle, parsedData.banner.subtitle);
+      }
+      if (config.selectors.fields.banner?.bottomRightTitle) {
+        await updateField(config.selectors.fields.banner.bottomRightTitle, parsedData.banner.bottomRightTitle);
+      }
 
-      await updateField(config.selectors.fields.buildMvp.leftTitle, parsedData.buildMvp.leftTitle);
-      await updateField(config.selectors.fields.buildMvp.leftSubtitle, parsedData.buildMvp.leftSubtitle);
-      await updateField(config.selectors.fields.buildMvp.rightTitle, parsedData.buildMvp.rightTitle);
-      await updateField(config.selectors.fields.buildMvp.rightSubtitle, parsedData.buildMvp.rightSubtitle);
+      if (config.selectors.fields.buildMvp?.leftTitle) {
+        await updateField(config.selectors.fields.buildMvp.leftTitle, parsedData.buildMvp.leftTitle);
+      }
+      if (config.selectors.fields.buildMvp?.leftSubtitle) {
+        await updateField(config.selectors.fields.buildMvp.leftSubtitle, parsedData.buildMvp.leftSubtitle);
+      }
+      if (config.selectors.fields.buildMvp?.rightTitle) {
+        await updateField(config.selectors.fields.buildMvp.rightTitle, parsedData.buildMvp.rightTitle);
+      }
+      if (config.selectors.fields.buildMvp?.rightSubtitle) {
+        await updateField(config.selectors.fields.buildMvp.rightSubtitle, parsedData.buildMvp.rightSubtitle);
+      }
 
-      await updateField(config.selectors.fields.serviceInclude.title, parsedData.serviceInclude.title);
-      await updateField(config.selectors.fields.serviceInclude.subtitle, parsedData.serviceInclude.subtitle);
+      if (config.selectors.fields.serviceInclude?.title) {
+        await updateField(config.selectors.fields.serviceInclude.title, parsedData.serviceInclude.title);
+      }
+      if (config.selectors.fields.serviceInclude?.subtitle) {
+        await updateField(config.selectors.fields.serviceInclude.subtitle, parsedData.serviceInclude.subtitle);
+      }
 
-      await updateField(config.selectors.fields.weFollow.title, parsedData.weFollow.title);
-      await updateField(config.selectors.fields.weFollow.subtitle, parsedData.weFollow.subtitle);
+      if (config.selectors.fields.weFollow?.title) {
+        await updateField(config.selectors.fields.weFollow.title, parsedData.weFollow.title);
+      }
+      if (config.selectors.fields.weFollow?.subtitle) {
+        await updateField(config.selectors.fields.weFollow.subtitle, parsedData.weFollow.subtitle);
+      }
 
-      await updateField(config.selectors.fields.stepProcess.title, parsedData.stepProcess.title);
-      await updateField(config.selectors.fields.stepProcess.description, parsedData.stepProcess.description);
+      if (config.selectors.fields.stepProcess?.title) {
+        await updateField(config.selectors.fields.stepProcess.title, parsedData.stepProcess.title);
+      }
+      if (config.selectors.fields.stepProcess?.description) {
+        await updateField(config.selectors.fields.stepProcess.description, parsedData.stepProcess.description);
+      }
 
-      await updateField(config.selectors.fields.weCover.title, parsedData.weCover.title);
-      await updateField(config.selectors.fields.weCover.subtitle, parsedData.weCover.subtitle);
+      if (config.selectors.fields.weCover?.title) {
+        await updateField(config.selectors.fields.weCover.title, parsedData.weCover.title);
+      }
+      if (config.selectors.fields.weCover?.subtitle) {
+        await updateField(config.selectors.fields.weCover.subtitle, parsedData.weCover.subtitle);
+      }
 
-      await updateField(config.selectors.fields.technologies.title, parsedData.technologies.title);
-      if (parsedData.technologies.list.length > 0) {
+      if (config.selectors.fields.technologies?.title) {
+        await updateField(config.selectors.fields.technologies.title, parsedData.technologies.title);
+      }
+      if (config.selectors.fields.technologies?.list && parsedData.technologies.list.length > 0) {
         const listStr = parsedData.technologies.list.map(t => `* ${t}`).join('\n');
         await updateField(config.selectors.fields.technologies.list, listStr);
       }

@@ -1,16 +1,13 @@
 /**
- * Configuration file for Bytes Automation Script.
+ * Configuration file for Bytes and MIS Automation Scripts.
  * Defines CSS selectors and settings for updating the WordPress admin panel
  * and verifying the frontend.
  */
 
+const isMIS = (process.env.WP_ADMIN_URL || '').includes('magnetoitsolutions.com');
+
 export const config = {
   // WordPress Admin Selector Configuration
-  // If the admin uses ACF (Advanced Custom Fields), specify the field name or ID selectors here.
-  // Playwright can locate elements by:
-  // - CSS selector (e.g. '#acf-field-banner_title')
-  // - XPath
-  // - Label text (e.g. 'Banner Section Title')
   selectors: {
     // Login selectors
     loginUser: '#user_login',
@@ -18,8 +15,33 @@ export const config = {
     loginSubmit: '#wp-submit',
 
     // WordPress Admin Page edit fields
-    // Structure matches the parsed sections. You can update these with actual selectors once verified.
-    fields: {
+    fields: isMIS ? {
+      banner: {
+        title: { label: 'Service Banner Title', selector: '#acf-field_6a169f2632377-row-0-field_6a1d4b0b0bf37' },
+        subtitle: { label: 'Service Banner Description', selector: 'textarea[name="acf[field_6a169f2632377][row-0][field_6a1d4b0b0bf38]"]' }
+      },
+      buildMvp: {
+        leftTitle: { label: 'List Retailer Section Title', selector: '#acf-field_6a169f2632377-row-1-field_lrs_title' },
+        leftSubtitle: { label: 'List Retailer Section Bottom Description', selector: '#acf-field_6a169f2632377-row-1-field_lrs_description' }
+      },
+      serviceInclude: {
+        title: { label: 'Core Capabilities Section Title', selector: '#acf-field_6a169f2632377-row-2-field_core_capabilities_title' },
+        subtitle: { label: 'Core Capabilities Section Description', selector: 'textarea[name="acf[field_6a169f2632377][row-2][field_core_capabilities_description]"]' }
+      },
+      weFollow: {
+        title: { label: 'Gradient Grid Section Title', selector: '#acf-field_6a169f2632377-row-3-field_ggs_heading' }
+      },
+      stepProcess: {
+        title: { label: 'Key Benefits Section Title', selector: '#acf-field_6a169f2632377-row-4-field_6a1d8298ea4f8' },
+        description: { label: 'Key Benefits Section Description', selector: 'textarea[name="acf[field_6a169f2632377][row-4][field_6a1d82a4ea4f9]"]' }
+      },
+      weCover: {
+        title: { label: 'Case Study Card Slider V2 Section Heading', selector: '#acf-field_6a169f2632377-row-5-field_cs_v2_heading' }
+      },
+      technologies: {
+        title: { label: 'Global AI Integration Heading', selector: '#acf-field_6a169f2632377-row-6-field_gai_heading' }
+      }
+    } : {
       banner: {
         title: { label: 'Banner Section Title:', selector: '#acf-field_66793d9793cee-row-0-field_66793e870f36c' },
         subtitle: { label: 'Banner Section Sub Title:', selector: '#acf-field_66793d9793cee-row-0-field_66793ebe60bdb' },

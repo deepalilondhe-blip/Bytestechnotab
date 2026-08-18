@@ -77,14 +77,12 @@ export function parseContent(text) {
     }
 
     // 1. Banner Section
-    if (line.startsWith('Banner Section Title:')) {
+    if (line.startsWith('Banner Section Title:') || line.startsWith('Service Banner Title:')) {
       data.banner.title = lines[++i]?.trim() || '';
       continue;
     }
-    if (line.startsWith('Banner Section Sub Title:')) {
-      // Sometimes followed by another paragraph or title line, let's grab next lines until empty or another field
+    if (line.startsWith('Banner Section Sub Title:') || line.startsWith('Service Banner Description:')) {
       let val = lines[++i]?.trim() || '';
-      // Read multi-line if needed
       while (i + 1 < lines.length && !lines[i+1].includes(':') && lines[i+1].trim() !== '' && !lines[i+1].startsWith('*')) {
         val += '\n' + lines[++i].trim();
       }
@@ -101,11 +99,11 @@ export function parseContent(text) {
     }
 
     // 2. Build MVP Section
-    if (line.startsWith('Build MVP Section Left Title:')) {
+    if (line.startsWith('Build MVP Section Left Title:') || line.startsWith('List Retailer Section Title:')) {
       data.buildMvp.leftTitle = lines[++i]?.trim() || '';
       continue;
     }
-    if (line.startsWith('Build MVP Section Left Subtitle:')) {
+    if (line.startsWith('Build MVP Section Left Subtitle:') || line.startsWith('List Retailer Section Bottom Description:')) {
       let val = lines[++i]?.trim() || '';
       while (i + 1 < lines.length && !lines[i+1].includes(':') && lines[i+1].trim() !== '' && !lines[i+1].startsWith('*')) {
         val += ' ' + lines[++i].trim();
@@ -118,7 +116,6 @@ export function parseContent(text) {
       continue;
     }
     if (line.startsWith('Build MVP Section Right Subtitle:')) {
-      // This is a list of challenges starting with *
       let val = '';
       if (lines[i+1]?.trim().startsWith('*')) {
         while (i + 1 < lines.length && lines[i+1].trim().startsWith('*')) {
@@ -134,18 +131,17 @@ export function parseContent(text) {
       }
       continue;
     }
-    // Fallback challenges capture
     if (line.startsWith('*') && data.buildMvp.challenges.length === 0 && !data.serviceInclude.title) {
       data.buildMvp.challenges.push(line.substring(1).trim());
       continue;
     }
 
     // 3. Service Include Section
-    if (line.startsWith('Service Include Section Title:')) {
+    if (line.startsWith('Service Include Section Title:') || line.startsWith('Core Capabilities Section Title:')) {
       data.serviceInclude.title = lines[++i]?.trim() || '';
       continue;
     }
-    if (line.startsWith('Service Include Section Subtitle:')) {
+    if (line.startsWith('Service Include Section Subtitle:') || line.startsWith('Core Capabilities Section Description:')) {
       let val = lines[++i]?.trim() || '';
       while (i + 1 < lines.length && !lines[i+1].includes(':') && lines[i+1].trim() !== '' && !lines[i+1].startsWith('*')) {
         val += ' ' + lines[++i].trim();
@@ -159,10 +155,6 @@ export function parseContent(text) {
     }
     if (line.startsWith('Service Include Section Service Subtitle:')) {
       const content = lines[++i]?.trim() || '';
-      
-      // Quirky behavior handling:
-      // If we have no tempServiceTitle, or we just finished a service and got another Subtitle label,
-      // it means this Subtitle is actually a Service Title, and the next one will be the subtitle.
       if (tempServiceTitle === null) {
         tempServiceTitle = content;
       } else {
@@ -170,13 +162,13 @@ export function parseContent(text) {
           title: tempServiceTitle,
           subtitle: content
         });
-        tempServiceTitle = null; // reset
+        tempServiceTitle = null;
       }
       continue;
     }
 
     // 4. We Follow Section
-    if (line.startsWith('We follow section Title:')) {
+    if (line.startsWith('We follow section Title:') || line.startsWith('Gradient Grid Section Title:')) {
       data.weFollow.title = lines[++i]?.trim() || '';
       continue;
     }
@@ -205,8 +197,6 @@ export function parseContent(text) {
     // 5. AI and ML Section (Industries)
     if (line.startsWith('AI and ML Section Tools Title:')) {
       data.industrySpecific.title = lines[++i]?.trim() || '';
-      // The next item is SaaS (which lacks a label). Let's parse the industries manually in sequence
-      // since the labels are irregular.
       continue;
     }
     if (line === 'SaaS') {
@@ -234,11 +224,11 @@ export function parseContent(text) {
     }
 
     // 6. Step Process Section
-    if (line.startsWith('Step Process Section Title:')) {
+    if (line.startsWith('Step Process Section Title:') || line.startsWith('Key Benefits Section Title:')) {
       data.stepProcess.title = lines[++i]?.trim() || '';
       continue;
     }
-    if (line.startsWith('Step Process Section Description:')) {
+    if (line.startsWith('Step Process Section Description:') || line.startsWith('Key Benefits Section Description:')) {
       let val = lines[++i]?.trim() || '';
       while (i + 1 < lines.length && !lines[i+1].includes(':') && lines[i+1].trim() !== '' && !lines[i+1].startsWith('*')) {
         val += ' ' + lines[++i].trim();
@@ -269,10 +259,8 @@ export function parseContent(text) {
       continue;
     }
     if (line.startsWith('Step Process Section Process Step Checklist:')) {
-      // Read the checklist title (like "Benefits")
       if (currentStep) {
         currentStep.checklistTitle = lines[++i]?.trim() || '';
-        // Collect following bullet points
         while (i + 1 < lines.length && lines[i+1].trim().startsWith('*')) {
           currentStep.checklist.push(lines[++i].trim().substring(1).trim());
         }
@@ -281,7 +269,7 @@ export function parseContent(text) {
     }
 
     // 7. We Cover Section
-    if (line.startsWith('We cover section Title:')) {
+    if (line.startsWith('We cover section Title:') || line.startsWith('Case Study Card Slider V2 Section Heading:')) {
       data.weCover.title = lines[++i]?.trim() || '';
       continue;
     }
@@ -308,19 +296,17 @@ export function parseContent(text) {
     }
 
     // 8. Technologies Section
-    if (line.startsWith('Technologies We work section Title:')) {
+    if (line.startsWith('Technologies We work section Title:') || line.startsWith('Global AI Integration Heading:')) {
       data.technologies.title = lines[++i]?.trim() || '';
       continue;
     }
     if (line.startsWith('Technologies We work section Technologies Title:')) {
-      // First item
       let firstItem = lines[++i]?.trim() || '';
       if (firstItem.startsWith('*')) {
         data.technologies.list.push(firstItem.substring(1).trim());
       } else {
         data.technologies.list.push(firstItem);
       }
-      // Followed by more items
       while (i + 1 < lines.length && lines[i+1].trim().startsWith('*') && !lines[i+1].includes(':')) {
         data.technologies.list.push(lines[++i].trim().substring(1).trim());
       }

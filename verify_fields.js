@@ -203,29 +203,58 @@ async function run() {
     console.log('\nRunning cross-verification of fields...\n');
     let report = '=== BYTES FIELD CROSS-VERIFICATION REPORT ===\n\n';
     
-    const fieldsToVerify = [
-      { name: 'Banner Title', expected: parsedData.banner.title, selector: config.selectors.fields.banner.title.selector },
-      { name: 'Banner Subtitle', expected: parsedData.banner.subtitle, selector: config.selectors.fields.banner.subtitle.selector },
-      { name: 'Banner Bottom Right Title', expected: parsedData.banner.bottomRightTitle, selector: config.selectors.fields.banner.bottomRightTitle.selector },
-      
-      { name: 'Build MVP Left Title', expected: parsedData.buildMvp.leftTitle, selector: config.selectors.fields.buildMvp.leftTitle.selector },
-      { name: 'Build MVP Left Subtitle', expected: parsedData.buildMvp.leftSubtitle, selector: config.selectors.fields.buildMvp.leftSubtitle.selector },
-      { name: 'Build MVP Right Title', expected: parsedData.buildMvp.rightTitle, selector: config.selectors.fields.buildMvp.rightTitle.selector },
-      
-      { name: 'Service Include Title', expected: parsedData.serviceInclude.title, selector: config.selectors.fields.serviceInclude.title.selector },
-      { name: 'Service Include Subtitle', expected: parsedData.serviceInclude.subtitle, selector: config.selectors.fields.serviceInclude.subtitle.selector },
-      
-      { name: 'We Follow Title', expected: parsedData.weFollow.title, selector: config.selectors.fields.weFollow.title.selector },
-      { name: 'We Follow Subtitle', expected: parsedData.weFollow.subtitle, selector: config.selectors.fields.weFollow.subtitle.selector },
-      
-      { name: 'Step Process Title', expected: parsedData.stepProcess.title, selector: config.selectors.fields.stepProcess.title.selector },
-      { name: 'Step Process Description', expected: parsedData.stepProcess.description, selector: config.selectors.fields.stepProcess.description.selector },
-      
-      { name: 'We Cover Title', expected: parsedData.weCover.title, selector: config.selectors.fields.weCover.title.selector },
-      { name: 'We Cover Subtitle', expected: parsedData.weCover.subtitle, selector: config.selectors.fields.weCover.subtitle.selector },
-      
-      { name: 'Technologies Title', expected: parsedData.technologies.title, selector: config.selectors.fields.technologies.title.selector }
-    ];
+    const fieldsToVerify = [];
+    if (config.selectors.fields.banner?.title) {
+      fieldsToVerify.push({ name: 'Banner Title', expected: parsedData.banner.title, selector: config.selectors.fields.banner.title.selector });
+    }
+    if (config.selectors.fields.banner?.subtitle) {
+      fieldsToVerify.push({ name: 'Banner Subtitle', expected: parsedData.banner.subtitle, selector: config.selectors.fields.banner.subtitle.selector });
+    }
+    if (config.selectors.fields.banner?.bottomRightTitle) {
+      fieldsToVerify.push({ name: 'Banner Bottom Right Title', expected: parsedData.banner.bottomRightTitle, selector: config.selectors.fields.banner.bottomRightTitle.selector });
+    }
+    
+    if (config.selectors.fields.buildMvp?.leftTitle) {
+      fieldsToVerify.push({ name: 'Build MVP Left Title', expected: parsedData.buildMvp.leftTitle, selector: config.selectors.fields.buildMvp.leftTitle.selector });
+    }
+    if (config.selectors.fields.buildMvp?.leftSubtitle) {
+      fieldsToVerify.push({ name: 'Build MVP Left Subtitle', expected: parsedData.buildMvp.leftSubtitle, selector: config.selectors.fields.buildMvp.leftSubtitle.selector });
+    }
+    if (config.selectors.fields.buildMvp?.rightTitle) {
+      fieldsToVerify.push({ name: 'Build MVP Right Title', expected: parsedData.buildMvp.rightTitle, selector: config.selectors.fields.buildMvp.rightTitle.selector });
+    }
+    
+    if (config.selectors.fields.serviceInclude?.title) {
+      fieldsToVerify.push({ name: 'Service Include Title', expected: parsedData.serviceInclude.title, selector: config.selectors.fields.serviceInclude.title.selector });
+    }
+    if (config.selectors.fields.serviceInclude?.subtitle) {
+      fieldsToVerify.push({ name: 'Service Include Subtitle', expected: parsedData.serviceInclude.subtitle, selector: config.selectors.fields.serviceInclude.subtitle.selector });
+    }
+    
+    if (config.selectors.fields.weFollow?.title) {
+      fieldsToVerify.push({ name: 'We Follow Title', expected: parsedData.weFollow.title, selector: config.selectors.fields.weFollow.title.selector });
+    }
+    if (config.selectors.fields.weFollow?.subtitle) {
+      fieldsToVerify.push({ name: 'We Follow Subtitle', expected: parsedData.weFollow.subtitle, selector: config.selectors.fields.weFollow.subtitle.selector });
+    }
+    
+    if (config.selectors.fields.stepProcess?.title) {
+      fieldsToVerify.push({ name: 'Step Process Title', expected: parsedData.stepProcess.title, selector: config.selectors.fields.stepProcess.title.selector });
+    }
+    if (config.selectors.fields.stepProcess?.description) {
+      fieldsToVerify.push({ name: 'Step Process Description', expected: parsedData.stepProcess.description, selector: config.selectors.fields.stepProcess.description.selector });
+    }
+    
+    if (config.selectors.fields.weCover?.title) {
+      fieldsToVerify.push({ name: 'We Cover Title', expected: parsedData.weCover.title, selector: config.selectors.fields.weCover.title.selector });
+    }
+    if (config.selectors.fields.weCover?.subtitle) {
+      fieldsToVerify.push({ name: 'We Cover Subtitle', expected: parsedData.weCover.subtitle, selector: config.selectors.fields.weCover.subtitle.selector });
+    }
+    
+    if (config.selectors.fields.technologies?.title) {
+      fieldsToVerify.push({ name: 'Technologies Title', expected: parsedData.technologies.title, selector: config.selectors.fields.technologies.title.selector });
+    }
     
     let mismatchCount = 0;
     for (const field of fieldsToVerify) {
