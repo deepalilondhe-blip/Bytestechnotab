@@ -8,6 +8,19 @@ import mammoth from 'mammoth';
  * @returns {Promise<string>}
  */
 export async function getRawText(filePath) {
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
+    console.log(`Downloading remote Google Doc: ${filePath}...`);
+    let exportUrl = filePath;
+    if (filePath.includes('/edit')) {
+      exportUrl = filePath.replace(/\/edit.*$/, '/export?format=txt');
+    }
+    const res = await fetch(exportUrl);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch Google Doc content: ${res.statusText}`);
+    }
+    return await res.text();
+  }
+
   const ext = path.extname(filePath).toLowerCase();
   
   if (ext === '.docx') {
