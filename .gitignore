@@ -20,3 +20,6 @@ screenshots/
 reports/
 editor_view.png
 login_page_inspect.png
+field_verification_report.txt
+acf_active_fields.txt
+acf_active_fields_utf8.txt
