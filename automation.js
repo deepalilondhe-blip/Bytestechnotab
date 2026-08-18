@@ -458,8 +458,10 @@ async function run() {
         
         if (fieldConf.selector && await page.locator(fieldConf.selector).first().count().catch(() => 0) > 0) {
           const locator = page.locator(fieldConf.selector).first();
-          await locator.scrollIntoViewIfNeeded();
-          await page.waitForTimeout(300);
+          if (await locator.isVisible()) {
+            await locator.scrollIntoViewIfNeeded().catch(() => {});
+            await page.waitForTimeout(300);
+          }
           await locator.fill(value);
           return;
         }
@@ -467,8 +469,10 @@ async function run() {
         const labelLocator = page.locator(`label:has-text("${fieldConf.label}")`);
         if (await labelLocator.first().count().catch(() => 0) > 0) {
           const locator = labelLocator.first();
-          await locator.scrollIntoViewIfNeeded();
-          await page.waitForTimeout(300);
+          if (await locator.isVisible()) {
+            await locator.scrollIntoViewIfNeeded().catch(() => {});
+            await page.waitForTimeout(300);
+          }
           const labelFor = await locator.getAttribute('for');
           if (labelFor) {
             await page.fill(`#${labelFor}`, value);
