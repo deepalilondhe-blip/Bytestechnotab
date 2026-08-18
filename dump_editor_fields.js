@@ -11,6 +11,7 @@ const WP_USERNAME = process.env.WP_USERNAME || '';
 const WP_PASSWORD = process.env.WP_PASSWORD || '';
 const HTTP_BASIC_AUTH_USER = process.env.HTTP_BASIC_AUTH_USER || '';
 const HTTP_BASIC_AUTH_PASS = process.env.HTTP_BASIC_AUTH_PASS || '';
+const WP_EDIT_URL = process.env.WP_EDIT_URL || '';
 
 // Math captcha solver dictionary
 const wordsToNumbers = {
@@ -66,15 +67,66 @@ function solveCaptcha(equationText) {
 async function run() {
   console.log('Starting editor field inspector...');
   
-  const browser = await chromium.connectOverCDP('http://localhost:9222');
-  const context = browser.contexts()[0];
-  const page = context.pages()[0] || await context.newPage();
+  const useCDP = process.env.USE_CDP === 'true';
+  let browser, context, page;
+  let isConnectedOverCDP = false;
+  
+  if (useCDP) {
+    console.log('Connecting to existing Chrome instance over CDP (port 9222)...');
+    try {
+      browser = await chromium.connectOverCDP('http://localhost:9222');
+      const contexts = browser.contexts();
+      if (contexts.length > 0) {
+        context = contexts[0];
+        const pages = context.pages();
+        page = pages.length > 0 ? pages[0] : await context.newPage();
+      } else {
+        context = await browser.newContext();
+        page = await context.newPage();
+      }
+      isConnectedOverCDP = true;
+    } catch (err) {
+      console.warn('Could not connect over CDP. Falling back to launching a new browser window...', err.message);
+    }
+  }
+  
+  if (!isConnectedOverCDP) {
+    console.log('Launching a new headed Chrome browser instance...');
+    browser = await chromium.launch({
+      headless: false,
+      channel: 'chrome',
+      args: [
+        '--disable-blink-features=AutomationControlled',
+        '--disable-web-security'
+      ]
+    });
+    
+    const contextOptions = {
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      viewport: { width: 1280, height: 720 },
+      locale: 'en-US',
+      deviceScaleFactor: 1
+    };
+    
+    if (HTTP_BASIC_AUTH_USER && HTTP_BASIC_AUTH_PASS) {
+      console.log('Setting HTTP Basic Authentication credentials...');
+      contextOptions.httpCredentials = {
+        username: HTTP_BASIC_AUTH_USER,
+        password: HTTP_BASIC_AUTH_PASS
+      };
+    }
+    
+    context = await browser.newContext(contextOptions);
+    page = await context.newPage();
+  }
   
   try {
-    console.log(`Checking WordPress Admin login status...`);
+    console.log(`Navigating to login URL: ${WP_ADMIN_URL}`);
     await page.goto(WP_ADMIN_URL, { waitUntil: 'load' });
     
-    if (await page.locator('#user_login').isVisible()) {
+    // Auto-login if needed
+    const isLoginVisible = await page.waitForSelector('#user_login', { timeout: 5000 }).then(() => true).catch(() => false);
+    if (isLoginVisible) {
       console.log('Logging in...');
       await page.fill('#user_login', WP_USERNAME);
       await page.fill('#user_pass', WP_PASSWORD);
@@ -95,25 +147,46 @@ async function run() {
     if (await page.locator('#login_error').isVisible()) {
       throw new Error('Login failed: ' + await page.locator('#login_error').innerText());
     }
+    console.log('✓ Logged in successfully.');
     
-    console.log('Login successful. Navigating to page editor...');
     const adminOrigin = new URL(WP_ADMIN_URL).origin;
-    await page.goto(`${adminOrigin}/wp-admin/edit.php?post_type=page`);
-    await page.fill('#post-search-input', 'Product Strategy');
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'load' }),
-      page.press('#post-search-input', 'Enter')
-    ]);
+    let editPageUrl = WP_EDIT_URL;
     
-    const editLinkLocator = page.locator('.row-actions .edit a, a.row-title').first();
-    const editPageUrl = await editLinkLocator.getAttribute('href');
-    if (editPageUrl) {
-      const absoluteEditUrl = editPageUrl.startsWith('http') ? editPageUrl : `${adminOrigin}${editPageUrl}`;
-      console.log(`Found direct Edit Page URL: ${absoluteEditUrl}. Navigating directly...`);
-      await page.goto(absoluteEditUrl, { waitUntil: 'load' });
-      console.log('Inside page editor.');
+    if (!editPageUrl) {
+      console.log(`Locating Pages section in sidebar menu...`);
+      const pagesMenu = page.locator('#menu-pages a.wp-has-submenu, #menu-pages a').first();
+      if (await pagesMenu.count() > 0) {
+        console.log('Found Pages link in sidebar menu. Clicking it...');
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'load' }),
+          pagesMenu.click()
+        ]);
+      } else {
+        console.log('Sidebar Pages link not found. Navigating to standard URL...');
+        await page.goto(`${adminOrigin}/wp-admin/edit.php?post_type=page`, { waitUntil: 'load' });
+      }
       
-      // Screenshot of editor
+      console.log('Searching for page: "2024 Product Information Management"...');
+      await page.fill('#post-search-input', '2024 Product Information Management');
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'load' }),
+        page.press('#post-search-input', 'Enter')
+      ]);
+      
+      const editLinkLocator = page.locator('.row-actions .edit a, a.row-title').first();
+      editPageUrl = await editLinkLocator.getAttribute('href');
+    }
+    
+    if (!editPageUrl) {
+      throw new Error("Could not find edit link for the target page.");
+    }
+    
+    const absoluteEditUrl = editPageUrl.startsWith('http') ? editPageUrl : `${adminOrigin}${editPageUrl}`;
+    console.log(`Navigating to edit URL: ${absoluteEditUrl}...`);
+    await page.goto(absoluteEditUrl, { waitUntil: 'load' });
+    console.log('Inside page editor.');
+    
+    if (true) {
       await page.screenshot({ path: './editor_view.png' });
       
       // Extract inputs, textareas, and select elements along with labels
