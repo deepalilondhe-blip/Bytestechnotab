@@ -15,6 +15,7 @@ const WP_USERNAME = process.env.WP_USERNAME || '';
 const WP_PASSWORD = process.env.WP_PASSWORD || '';
 const HTTP_BASIC_AUTH_USER = process.env.HTTP_BASIC_AUTH_USER || '';
 const HTTP_BASIC_AUTH_PASS = process.env.HTTP_BASIC_AUTH_PASS || '';
+const WP_EDIT_URL = process.env.WP_EDIT_URL || '';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://staging.bytestechnolab.com/services/product-strategy-consulting/';
 const WORD_FILE_PATH = process.env.WORD_FILE_PATH || './Bytes Content Automation.docx';
 
@@ -402,9 +403,14 @@ async function run() {
     console.log('\nLocating "Edit Page" link in WordPress Admin Bar...');
     const editPageLocator = page.locator('#wpadminbar a:has-text("Edit Page"), #wpadminbar a[href*="post.php?post="]').first();
     
-    if (await editPageLocator.isVisible()) {
-      const editPageUrl = await editPageLocator.getAttribute('href');
-      console.log(`Found edit page URL: ${editPageUrl}`);
+    let editPageUrl = WP_EDIT_URL;
+    
+    if (editPageUrl) {
+      console.log(`Navigating directly to WP_EDIT_URL: ${editPageUrl}...`);
+      await page.goto(editPageUrl, { waitUntil: 'load' });
+    } else if (await editPageLocator.isVisible()) {
+      editPageUrl = await editPageLocator.getAttribute('href');
+      console.log(`Found edit page URL in admin bar: ${editPageUrl}`);
       await page.goto(editPageUrl, { waitUntil: 'load' });
     } else {
       console.log('⚠️ Admin bar Edit Page link not visible. Navigating to standard post editor list...');
@@ -426,9 +432,9 @@ async function run() {
         page.press('#post-search-input', 'Enter')
       ]);
       const editLinkLocator = page.locator('.row-actions .edit a, a.row-title').first();
-      const editPageUrl = await editLinkLocator.getAttribute('href');
-      if (editPageUrl) {
-        const absoluteEditUrl = editPageUrl.startsWith('http') ? editPageUrl : `${adminOrigin}${editPageUrl}`;
+      const editLinkUrl = await editLinkLocator.getAttribute('href');
+      if (editLinkUrl) {
+        const absoluteEditUrl = editLinkUrl.startsWith('http') ? editLinkUrl : `${adminOrigin}${editLinkUrl}`;
         console.log(`Found direct Edit Page URL: ${absoluteEditUrl}. Navigating directly...`);
         await page.goto(absoluteEditUrl, { waitUntil: 'load' });
       } else {

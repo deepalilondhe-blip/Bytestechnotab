@@ -13,7 +13,8 @@ const WP_USERNAME = process.env.WP_USERNAME || '';
 const WP_PASSWORD = process.env.WP_PASSWORD || '';
 const HTTP_BASIC_AUTH_USER = process.env.HTTP_BASIC_AUTH_USER || '';
 const HTTP_BASIC_AUTH_PASS = process.env.HTTP_BASIC_AUTH_PASS || '';
-const SEARCH_QUERY = 'Product Strategy';
+const WP_EDIT_URL = process.env.WP_EDIT_URL || '';
+const SEARCH_QUERY = '2024 Product Information Management';
 const SOURCE_FILE = './content.md';
 
 const wordsToNumbers = {
@@ -164,35 +165,39 @@ async function run() {
     console.log('Taking dashboard screenshot...');
     await page.screenshot({ path: './verify_dashboard_state.png' }).catch(() => {});
     
-    console.log(`Locating Pages section in sidebar menu...`);
-    const pagesMenu = page.locator('#menu-pages a.wp-has-submenu, #menu-pages a').first();
-    if (await pagesMenu.count() > 0) {
-      console.log('Found Pages link in sidebar menu. Clicking it...');
+    let editPageUrl = WP_EDIT_URL;
+    
+    if (!editPageUrl) {
+      console.log(`Locating Pages section in sidebar menu...`);
+      const pagesMenu = page.locator('#menu-pages a.wp-has-submenu, #menu-pages a').first();
+      if (await pagesMenu.count() > 0) {
+        console.log('Found Pages link in sidebar menu. Clicking it...');
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'load' }),
+          pagesMenu.click()
+        ]);
+      } else {
+        console.log('Sidebar Pages link not found. Navigating to standard URL...');
+        await page.goto(`${adminOrigin}/wp-admin/edit.php?post_type=page`, { waitUntil: 'load' });
+      }
+      
+      console.log(`Searching for page: "${SEARCH_QUERY}"...`);
+      await page.fill('#post-search-input', SEARCH_QUERY);
       await Promise.all([
         page.waitForNavigation({ waitUntil: 'load' }),
-        pagesMenu.click()
+        page.press('#post-search-input', 'Enter')
       ]);
-    } else {
-      console.log('Sidebar Pages link not found. Navigating to standard URL...');
-      await page.goto(`${adminOrigin}/wp-admin/edit.php?post_type=page`, { waitUntil: 'load' });
+      
+      const editLinkLocator = page.locator('.row-actions .edit a, a.row-title').first();
+      editPageUrl = await editLinkLocator.getAttribute('href');
     }
-    
-    console.log(`Searching for page: "${SEARCH_QUERY}"...`);
-    await page.fill('#post-search-input', SEARCH_QUERY);
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'load' }),
-      page.press('#post-search-input', 'Enter')
-    ]);
-    
-    const editLinkLocator = page.locator('.row-actions .edit a, a.row-title').first();
-    const editPageUrl = await editLinkLocator.getAttribute('href');
     
     if (!editPageUrl) {
       throw new Error(`Could not find search result page for: "${SEARCH_QUERY}"`);
     }
     
     const absoluteEditUrl = editPageUrl.startsWith('http') ? editPageUrl : `${adminOrigin}${editPageUrl}`;
-    console.log(`Found edit URL: ${absoluteEditUrl}. Navigating...`);
+    console.log(`Navigating to edit URL: ${absoluteEditUrl}...`);
     await page.goto(absoluteEditUrl, { waitUntil: 'load' });
     
     console.log('\nRunning cross-verification of fields...\n');
