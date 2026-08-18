@@ -65,7 +65,11 @@ function solveCaptcha(equationText) {
 
 function cleanText(text) {
   if (text == null) return '';
-  return String(text).replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+  return String(text)
+    .replace(/&amp;/g, '&')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 async function run() {

@@ -42,6 +42,7 @@ const wordsToNumbers = {
 function normalizeText(text) {
   if (text == null) return '';
   return String(text)
+    .replace(/&amp;/g, '&')
     .replace(/\u00a0/g, ' ') // Replace non-breaking spaces
     .replace(/\s+/g, ' ')    // Standardize whitespace
     .trim();
