@@ -410,6 +410,7 @@ async function run() {
       await page.fill('#post-search-input', 'Product Strategy');
       await page.press('#post-search-input', 'Enter');
       await page.locator('a.row-title').first().click();
+      await page.waitForSelector('#poststuff, .block-editor-page, .elementor-editor-active', { timeout: 30000 }).catch(() => {});
     }
 
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, '3_page_editor.png') });
