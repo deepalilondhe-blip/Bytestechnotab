@@ -151,7 +151,7 @@ async function detectEditor(page) {
   // Elementor Selectors
   const elementorClasses = ['.elementor-editor-active', '#elementor-panel', '.elementor-panel', '.elementor-editor'];
   for (const selector of elementorClasses) {
-    if (await page.locator(selector).first().isVisible().catch(() => false)) {
+    if (await page.locator(selector).first().count().catch(() => 0) > 0) {
       console.log('✓ Elementor detected');
       return 'elementor';
     }
@@ -160,22 +160,16 @@ async function detectEditor(page) {
   // Gutenberg Selectors
   const gutenbergClasses = ['.block-editor-page', '.editor-styles-wrapper', '.interface-interface-skeleton', '.edit-post-layout'];
   for (const selector of gutenbergClasses) {
-    if (await page.locator(selector).first().isVisible().catch(() => false)) {
+    if (await page.locator(selector).first().count().catch(() => 0) > 0) {
       console.log('✓ Gutenberg detected');
       return 'gutenberg';
     }
   }
   
-  // Classic Editor Selectors
-  if (await page.locator('#content').first().isVisible().catch(() => false)) {
+  // Classic Editor (includes hidden textarea #content)
+  if (await page.locator('#content').first().count().catch(() => 0) > 0) {
     console.log('✓ Classic Editor detected');
     return 'classic';
-  }
-  
-  // TinyMCE Selectors
-  if (await page.locator('iframe.wp-editor-area').first().isVisible().catch(() => false)) {
-    console.log('✓ TinyMCE detected');
-    return 'tinymce';
   }
   
   console.log('⚠️ Editor type could not be determined. Assuming Gutenberg block-based fallback.');
