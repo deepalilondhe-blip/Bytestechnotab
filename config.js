@@ -21,67 +21,33 @@ export const config = {
     // Structure matches the parsed sections. You can update these with actual selectors once verified.
     fields: {
       banner: {
-        title: { label: 'Banner Section Title:', selector: 'input[name*="banner_title"]' },
-        subtitle: { label: 'Banner Section Sub Title:', selector: 'input[name*="banner_subtitle"]' },
-        bottomRightTitle: { label: 'Banner Section Banner Bottom Right Title:', selector: 'textarea[name*="banner_bottom_right"]' }
+        title: { label: 'Banner Section Title:', selector: '#acf-field_66793d9793cee-row-0-field_66793e870f36c' },
+        subtitle: { label: 'Banner Section Sub Title:', selector: '#acf-field_66793d9793cee-row-0-field_66793ebe60bdb' },
+        bottomRightTitle: { label: 'Banner Section Banner Bottom Right Title:', selector: '#acf-field_66793d9793cee-row-0-field_667a73a31f078' }
       },
       buildMvp: {
-        leftTitle: { label: 'Build MVP Section Left Title:', selector: 'input[name*="mvp_left_title"]' },
-        leftSubtitle: { label: 'Build MVP Section Left Subtitle:', selector: 'textarea[name*="mvp_left_subtitle"]' },
-        rightTitle: { label: 'Build MVP Section Right Title:', selector: 'input[name*="mvp_right_title"]' },
-        rightSubtitle: { label: 'Build MVP Section Right Subtitle:', selector: 'textarea[name*="mvp_right_subtitle"]' }
+        leftTitle: { label: 'Build MVP Section Left Title:', selector: '#acf-field_66793d9793cee-row-1-field_66ec15dcb7ec8' },
+        leftSubtitle: { label: 'Build MVP Section Left Subtitle:', selector: '#acf-field_66793d9793cee-row-1-field_66ec15e3b7ec9' },
+        rightTitle: { label: 'Build MVP Section Right Title:', selector: '#acf-field_66793d9793cee-row-1-field_66ec1649b7ecd' }
       },
       serviceInclude: {
-        title: { label: 'Service Include Section Title:', selector: 'input[name*="service_include_title"]' },
-        subtitle: { label: 'Service Include Section Subtitle:', selector: 'textarea[name*="service_include_subtitle"]' },
-        // Repeater fields can be addressed dynamically in automation.js
-        services: {
-          container: '.acf-field-repeater[data-name="services"]',
-          title: 'input[name*="service_title"]',
-          subtitle: 'textarea[name*="service_subtitle"]'
-        }
+        title: { label: 'Service Include Section Title:', selector: '#acf-field_66793d9793cee-row-2-field_667a746d00363' },
+        subtitle: { label: 'Service Include Section Subtitle:', selector: '#acf-field_66793d9793cee-row-2-field_667a747400364' }
       },
       weFollow: {
-        title: { label: 'We follow section Title:', selector: 'input[name*="we_follow_title"]' },
-        subtitle: { label: 'We follow section Subtitle:', selector: 'textarea[name*="we_follow_subtitle"]' },
-        points: {
-          container: '.acf-field-repeater[data-name="we_follow_points"]',
-          title: 'input[name*="point_title"]',
-          subtitle: 'textarea[name*="point_subtitle"]'
-        }
-      },
-      industrySpecific: {
-        title: { label: 'AI and ML Section Tools Title:', selector: 'input[name*="industry_title"]' }
-        // ... individual industries description fields
+        title: { label: 'We follow section Title:', selector: '#acf-field_66793d9793cee-row-3-field_66828b6e34ad0' },
+        subtitle: { label: 'We follow section Subtitle:', selector: '#acf-field_66793d9793cee-row-3-field_66828b7334ad1' }
       },
       stepProcess: {
-        title: { label: 'Step Process Section Title:', selector: 'input[name*="step_process_title"]' },
-        description: { label: 'Step Process Section Description:', selector: 'textarea[name*="step_process_description"]' },
-        steps: {
-          container: '.acf-field-repeater[data-name="process_steps"]',
-          title: 'input[name*="step_title"]',
-          contentTitle: 'input[name*="content_title"]',
-          contentDesc: 'textarea[name*="content_desc"]',
-          checklist: 'textarea[name*="checklist"]'
-        }
+        title: { label: 'Step Process Section Title:', selector: '#acf-field_66793d9793cee-row-6-field_6a46079e8db41' },
+        description: { label: 'Step Process Section Description:', selector: '#acf-field_66793d9793cee-row-6-field_6a4607c98db42' }
       },
       weCover: {
-        title: { label: 'We cover section Title:', selector: 'input[name*="we_cover_title"]' },
-        subtitle: { label: 'We cover section Subtitle:', selector: 'textarea[name*="we_cover_subtitle"]' },
-        details: {
-          container: '.acf-field-repeater[data-name="we_cover_details"]',
-          title: 'input[name*="detail_title"]',
-          subtitle: 'textarea[name*="detail_subtitle"]'
-        }
+        title: { label: 'We cover section Title:', selector: '#acf-field_66793d9793cee-row-10-field_6679491d3ddc9' },
+        subtitle: { label: 'We cover section Subtitle:', selector: '#acf-field_66793d9793cee-row-10-field_66829964303d3' }
       },
       technologies: {
-        title: { label: 'Technologies We work section Title:', selector: 'input[name*="tech_title"]' },
-        list: { label: 'Technologies We work section Technologies Title:', selector: 'textarea[name*="tech_list"]' }
-      },
-      faqs: {
-        container: '.acf-field-repeater[data-name="faqs"]',
-        question: 'input[name*="faq_question"]',
-        answer: 'textarea[name*="faq_answer"]'
+        title: { label: 'Technologies We work section Title:', selector: '#acf-field_66793d9793cee-row-11-field_667d464d337c1' }
       }
     },
     saveButton: '#publish, #save-post' // WordPress publish or save draft button
