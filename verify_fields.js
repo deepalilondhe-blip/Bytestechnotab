@@ -161,8 +161,21 @@ async function run() {
     console.log('✓ Logged in successfully.');
     
     const adminOrigin = new URL(WP_ADMIN_URL).origin;
-    console.log(`Navigating to Pages list...`);
-    await page.goto(`${adminOrigin}/wp-admin/edit.php?post_type=page`, { waitUntil: 'load' });
+    console.log('Taking dashboard screenshot...');
+    await page.screenshot({ path: './verify_dashboard_state.png' }).catch(() => {});
+    
+    console.log(`Locating Pages section in sidebar menu...`);
+    const pagesMenu = page.locator('#menu-pages a.wp-has-submenu, #menu-pages a').first();
+    if (await pagesMenu.count() > 0) {
+      console.log('Found Pages link in sidebar menu. Clicking it...');
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'load' }),
+        pagesMenu.click()
+      ]);
+    } else {
+      console.log('Sidebar Pages link not found. Navigating to standard URL...');
+      await page.goto(`${adminOrigin}/wp-admin/edit.php?post_type=page`, { waitUntil: 'load' });
+    }
     
     console.log(`Searching for page: "${SEARCH_QUERY}"...`);
     await page.fill('#post-search-input', SEARCH_QUERY);

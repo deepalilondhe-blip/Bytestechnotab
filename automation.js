@@ -409,7 +409,17 @@ async function run() {
     } else {
       console.log('⚠️ Admin bar Edit Page link not visible. Navigating to standard post editor list...');
       const adminOrigin = new URL(WP_ADMIN_URL).origin;
-      await page.goto(`${adminOrigin}/wp-admin/edit.php?post_type=page`);
+      const pagesMenu = page.locator('#menu-pages a.wp-has-submenu, #menu-pages a').first();
+      if (await pagesMenu.count() > 0) {
+        console.log('Found Pages link in sidebar menu. Clicking it...');
+        await Promise.all([
+          page.waitForNavigation({ waitUntil: 'load' }),
+          pagesMenu.click()
+        ]);
+      } else {
+        console.log('Sidebar Pages link not found. Navigating to standard URL...');
+        await page.goto(`${adminOrigin}/wp-admin/edit.php?post_type=page`, { waitUntil: 'load' });
+      }
       await page.fill('#post-search-input', 'Product Strategy');
       await Promise.all([
         page.waitForNavigation({ waitUntil: 'load' }),
