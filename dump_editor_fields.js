@@ -3,7 +3,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 
-dotenv.config();
+const envFile = process.env.ENV_FILE || '.env';
+dotenv.config({ path: envFile });
 
 const WP_ADMIN_URL = process.env.WP_ADMIN_URL || 'https://staging.bytestechnolab.com/HjiMvLE1D6ycKpE/';
 const WP_USERNAME = process.env.WP_USERNAME || '';

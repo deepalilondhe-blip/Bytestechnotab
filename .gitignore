@@ -4,6 +4,7 @@ package-lock.json
 
 # Environment variables (contains credentials)
 .env
+.env.mis
 
 # Diagnostic dumps and logs
 wp_fields_dump.txt
