@@ -1,0 +1,24 @@
+=== HOW TO RUN THE AUTOMATION AND VERIFICATION SCRIPTS (PLAYWRIGHT JAVASCRIPT) ===
+
+Ensure your Chrome browser is open in remote debugging mode on port 9222 first:
+  chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\ChromeDebug"
+
+Option 1: Double-Click Batch Files (Recommended on Windows)
+------------------------------------------------------------
+* Double-click "run_verification.bat" to run the headed cross-verification script.
+* Double-click "run.bat" to run the content update automation script.
+
+Option 2: Run via Terminal (Command Prompt / PowerShell)
+-------------------------------------------------------
+Navigate to the project folder:
+  cd c:\Bytestechnolab
+
+1. Run the Headed Cross-Verification Script:
+   node verify_fields.js
+
+2. Run the Main Content Update Automation Script:
+   npm start
+   (or: node automation.js)
+
+Note: By default, the main automation script runs in DRY_RUN mode (does not save changes). 
+To make it write and save changes, open ".env" and set "DRY_RUN=false".
