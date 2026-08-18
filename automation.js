@@ -330,19 +330,16 @@ async function run() {
   };
 
   try {
-    // 3. Login to WordPress Admin (Skip if already connected over CDP)
-    if (isConnectedOverCDP) {
-      console.log('\nConnected over CDP: Skipping login stage and using active browser session.');
-    } else {
-      console.log(`\nNavigating to WP Admin: ${WP_ADMIN_URL}`);
-      await page.goto(WP_ADMIN_URL, { waitUntil: 'load' });
-      await page.screenshot({ path: path.join(SCREENSHOT_DIR, '0_login_page.png') });
+    // 3. Login to WordPress Admin
+    console.log(`\nChecking WordPress Admin login status...`);
+    await page.goto(WP_ADMIN_URL, { waitUntil: 'load' });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, '0_login_page.png') });
 
-      // Check for IP blocks or Cloudflare blocks
-      const bodyText = await page.innerText('body').catch(() => '');
-      if (bodyText.includes('blocked for security reasons') || bodyText.includes('Access from your IP address has been blocked') || bodyText.includes('you have been blocked') || bodyText.includes('unable to access')) {
-        throw new Error("Staging server or Cloudflare blocked our IP address. Please whitelist this IP in WordPress or use a different connection.");
-      }
+    // Check for IP blocks or Cloudflare blocks
+    const bodyText = await page.innerText('body').catch(() => '');
+    if (bodyText.includes('blocked for security reasons') || bodyText.includes('Access from your IP address has been blocked') || bodyText.includes('you have been blocked') || bodyText.includes('unable to access')) {
+      throw new Error("Staging server or Cloudflare blocked our IP address. Please whitelist this IP in WordPress or use a different connection.");
+    }
 
     if (await page.locator(config.selectors.loginUser).isVisible()) {
       console.log('Login form found. Logging in...');
@@ -377,7 +374,6 @@ async function run() {
 
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, '1_dashboard.png') });
     console.log('✓ WordPress login successful.');
-    }
 
     // 4. Open Frontend page
     console.log(`\nNavigating to Frontend website: ${FRONTEND_URL}`);
