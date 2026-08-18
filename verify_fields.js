@@ -135,7 +135,8 @@ async function run() {
     await page.goto(WP_ADMIN_URL, { waitUntil: 'load' });
     
     // Auto-login if needed
-    if (await page.locator('#user_login').isVisible()) {
+    const isLoginVisible = await page.waitForSelector('#user_login', { timeout: 5000 }).then(() => true).catch(() => false);
+    if (isLoginVisible) {
       console.log('Logging in...');
       await page.fill('#user_login', WP_USERNAME);
       await page.fill('#user_pass', WP_PASSWORD);

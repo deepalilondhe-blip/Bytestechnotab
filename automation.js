@@ -342,7 +342,8 @@ async function run() {
       throw new Error("Staging server or Cloudflare blocked our IP address. Please whitelist this IP in WordPress or use a different connection.");
     }
 
-    if (await page.locator(config.selectors.loginUser).isVisible()) {
+    const isLoginVisible = await page.waitForSelector(config.selectors.loginUser, { timeout: 5000 }).then(() => true).catch(() => false);
+    if (isLoginVisible) {
       console.log('Login form found. Logging in...');
       await page.fill(config.selectors.loginUser, WP_USERNAME);
       await page.fill(config.selectors.loginPass, WP_PASSWORD);
