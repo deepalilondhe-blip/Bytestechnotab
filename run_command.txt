@@ -25,6 +25,10 @@ the inline banner background image, updates all 15 text fields, and saves the pa
 * Verification Script (Verifies staging site matches doc):
   PowerShell/CMD: node verify_fields.js
 
+* Cross-Verification Script (Checks live frontend URL vs doc, shows popup if mismatch, auto-updates WP):
+  PowerShell/CMD: node cross_verify.js
+  OR:             npm run cross-verify
+
 * Batch Files (Double-click from Windows Explorer):
   - Run Bytes Update:      double-click 'run.bat'
   - Run Bytes Verify:      double-click 'run_verification.bat'

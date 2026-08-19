@@ -5,7 +5,9 @@
   "main": "automation.js",
   "type": "module",
   "scripts": {
-    "start": "node automation.js"
+    "start": "node automation.js",
+    "verify": "node verify_fields.js",
+    "cross-verify": "node cross_verify.js"
   },
   "dependencies": {
     "diff": "^9.0.0",
