@@ -54,7 +54,7 @@ function solveCaptcha(equationText) {
   return 0;
 }
 
-// ─── Text cleaner (normalise whitespace, strip HTML, decode entities) ─────────
+// ─── Clean text (normalise whitespace, strip HTML) ────────────────────────────
 function cleanText(text) {
   if (text == null) return '';
   return String(text)
@@ -62,29 +62,26 @@ function cleanText(text) {
     .replace(/&amp;/g, '&')
     .replace(/&nbsp;/g, ' ')
     .replace(/\u00a0/g, ' ')
-    .replace(/\r\n/g, ' ')
-    .replace(/\r/g, ' ')
-    .replace(/\n/g, ' ')
+    .replace(/\r\n|\r|\n/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
-// ─── Full word-for-word comparison ────────────────────────────────────────────
-// Returns true only when the COMPLETE expected text (not truncated) appears
-// verbatim inside the live page body (case-insensitive, whitespace-normalised).
+// ─── Full word-for-word match check ──────────────────────────────────────────
 function isFullMatch(expected, liveBodyClean) {
   const expectedFull = cleanText(expected).toLowerCase();
-  if (!expectedFull) return true; // nothing to check
+  if (!expectedFull) return true;
   return liveBodyClean.includes(expectedFull);
 }
 
-// ─── Mismatch popup shown on the frontend page ────────────────────────────────
+// ─── Show mismatch popup (all data passed as plain args to avoid scope issues)─
 async function showMismatchPopup(page, mismatches) {
+  // Build rows in Node.js context (safe)
   const rows = mismatches.map(m =>
     `<tr>
       <td style="padding:8px 12px;border-bottom:1px solid #333;font-weight:bold;color:#f1c40f;white-space:nowrap">${m.name}</td>
       <td style="padding:8px 12px;border-bottom:1px solid #333;color:#e74c3c;max-width:280px;word-wrap:break-word;font-size:12px">
-        ${m.live ? m.live.substring(0, 100) : '(not on page)'}
+        ${m.live ? m.live.substring(0, 100) : '(not found on page)'}
       </td>
       <td style="padding:8px 12px;border-bottom:1px solid #333;color:#2ecc71;max-width:280px;word-wrap:break-word;font-size:12px">
         ${m.expected.substring(0, 100)}
@@ -92,7 +89,10 @@ async function showMismatchPopup(page, mismatches) {
     </tr>`
   ).join('');
 
-  await page.evaluate((rows) => {
+  const count = mismatches.length;
+
+  // Pass rows AND count as arguments — no Node.js variables referenced inside evaluate
+  await page.evaluate(({ rows, count }) => {
     const existing = document.getElementById('cross-verify-popup');
     if (existing) existing.remove();
     const overlay = document.createElement('div');
@@ -109,18 +109,18 @@ async function showMismatchPopup(page, mismatches) {
                   box-shadow:0 0 40px rgba(231,76,60,0.6)">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <h2 style="color:#e74c3c;margin:0;font-size:20px">
-            ⚠️ Content Mismatch — ${mismatches.length} Field(s) Need Update
+            ⚠️ Content Mismatch — ${count} Field(s) Need Update
           </h2>
           <span style="color:#888;font-size:12px">${new Date().toLocaleString()}</span>
         </div>
         <p style="color:#aaa;margin-bottom:18px;font-size:13px">
-          The fields below do not match the Google Doc. The WordPress editor will open automatically to fix them.
+          Fields below do not match the Google Doc. WordPress editor will open automatically.
         </p>
         <table style="width:100%;border-collapse:collapse;font-size:12px">
           <thead>
             <tr style="background:#2a2a3e">
               <th style="padding:10px 12px;text-align:left;color:#fff">Field</th>
-              <th style="padding:10px 12px;text-align:left;color:#e74c3c">Live (Frontend)</th>
+              <th style="padding:10px 12px;text-align:left;color:#e74c3c">Live Frontend</th>
               <th style="padding:10px 12px;text-align:left;color:#2ecc71">Expected (Doc)</th>
             </tr>
           </thead>
@@ -129,19 +129,19 @@ async function showMismatchPopup(page, mismatches) {
         <div style="margin-top:20px;text-align:center">
           <div style="background:#e74c3c;color:#fff;padding:10px 30px;
                       border-radius:6px;display:inline-block;font-size:14px;font-weight:bold">
-            🔄 Auto-updating WordPress editor in 4 seconds...
+            🔄 Opening WordPress editor in 4 seconds...
           </div>
         </div>
       </div>
     `;
     document.body.appendChild(overlay);
-  }, rows);
+  }, { rows, count });
 
-  console.log('  → Mismatch popup shown. Waiting 4 seconds...');
+  console.log('  → Popup shown on screen. Waiting 4 seconds...');
   await page.waitForTimeout(4000);
 }
 
-// ─── Success popup ─────────────────────────────────────────────────────────────
+// ─── Show success popup ───────────────────────────────────────────────────────
 async function showSuccessPopup(page, message) {
   await page.evaluate((msg) => {
     const existing = document.getElementById('cross-verify-popup');
@@ -160,7 +160,9 @@ async function showSuccessPopup(page, message) {
                   box-shadow:0 0 40px rgba(39,174,96,0.5)">
         <div style="font-size:56px;margin-bottom:16px">✅</div>
         <h2 style="color:#27ae60;margin:0 0 12px;font-size:22px">${msg}</h2>
-        <p style="color:#aaa;font-size:14px;margin:0">All titles, subtitles and descriptions match the Google Doc exactly.</p>
+        <p style="color:#aaa;font-size:14px;margin:0">
+          All titles, subtitles and descriptions match the Google Doc exactly.
+        </p>
         <p style="color:#666;font-size:12px;margin-top:12px">${new Date().toLocaleString()}</p>
       </div>
     `;
@@ -169,7 +171,7 @@ async function showSuccessPopup(page, message) {
   await page.waitForTimeout(4000);
 }
 
-// ─── WordPress login ───────────────────────────────────────────────────────────
+// ─── Login to WordPress ───────────────────────────────────────────────────────
 async function loginToWordPress(page) {
   await page.goto(WP_ADMIN_URL, { waitUntil: 'load' });
   const isLoginVisible = await page.waitForSelector('#user_login', { timeout: 8000 }).then(() => true).catch(() => false);
@@ -196,7 +198,7 @@ async function loginToWordPress(page) {
   }
 }
 
-// ─── Update mismatched fields in WP editor ─────────────────────────────────────
+// ─── Update mismatched fields in WP editor ────────────────────────────────────
 async function updateMismatchedFields(page, mismatches) {
   console.log('\n  Navigating to WordPress editor...');
   await page.goto(WP_EDIT_URL, { waitUntil: 'load' });
@@ -210,67 +212,63 @@ async function updateMismatchedFields(page, mismatches) {
     await page.waitForTimeout(1500);
   }
 
-  console.log(`\n  Updating ${mismatches.length} mismatched field(s):\n`);
+  console.log(`\n  Updating ${mismatches.length} field(s):\n`);
 
   for (const field of mismatches) {
     const locator = page.locator(field.selector);
-    const count = await locator.count();
+    const count   = await locator.count();
 
     if (count > 0) {
       await locator.scrollIntoViewIfNeeded().catch(() => {});
       await page.waitForTimeout(300);
 
-      // Highlight orange before update
+      // Highlight orange = updating
       await locator.evaluate(el => {
         el.style.outline = '3px solid #f39c12';
         el.style.boxShadow = '0 0 12px #f39c12';
       }).catch(() => {});
       await page.waitForTimeout(300);
 
-      // Write the full exact value from doc
       const isVisible = await locator.isVisible();
       if (isVisible) {
         await locator.click({ force: true }).catch(() => {});
-        await locator.fill(''); // clear first
-        await locator.fill(field.expected);
+        await locator.fill('');                 // clear existing value first
+        await locator.fill(field.expected);     // fill exact doc value
       } else {
-        // Hidden / collapsed field — write via JS and fire change event
+        // Hidden/collapsed field — write via JS and fire events
         await locator.evaluate((el, val) => {
           el.value = val;
-          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('input',  { bubbles: true }));
           el.dispatchEvent(new Event('change', { bubbles: true }));
         }, field.expected);
       }
       await page.waitForTimeout(200);
 
-      // Highlight green after update
+      // Highlight green = done
       await locator.evaluate(el => {
         el.style.outline = '3px solid #27ae60';
         el.style.boxShadow = '0 0 12px #27ae60';
       }).catch(() => {});
 
-      console.log(`  ✓ Updated: "${field.name}"`);
-      console.log(`    Value:   "${field.expected.substring(0, 80)}..."`);
+      console.log(`  ✓ Updated: ${field.name}`);
     } else {
-      console.log(`  ⚠️  Selector not found: "${field.name}"`);
+      console.log(`  ⚠️  Selector not found: ${field.name}`);
     }
   }
 
-  // ── Reliable save: remove backdrops then DOM-click ──
-  console.log('\n  Saving page to WordPress...');
+  // ── Save: remove backdrops, then DOM-click save + wait for navigation ──
+  console.log('\n  Saving page in WordPress...');
   await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }));
   await page.waitForTimeout(800);
 
-  // Remove any stuck media modal backdrops that block the save button
+  // Remove stuck media modal backdrops
   await page.evaluate(() => {
     document.querySelectorAll('.media-modal-backdrop').forEach(el => el.remove());
-    document.querySelectorAll('.media-modal').forEach(el => {
-      if (el.style.display !== 'none') el.style.display = 'none';
-    });
+    document.querySelectorAll('.media-modal').forEach(el => { el.style.display = 'none'; });
   });
   await page.waitForTimeout(500);
 
-  // DOM-click the save button and wait for WP to navigate to success page
+  // DOM-click save and wait for WP to navigate to the success page
   try {
     await Promise.all([
       page.waitForNavigation({ waitUntil: 'load', timeout: 30000 }),
@@ -281,35 +279,34 @@ async function updateMismatchedFields(page, mismatches) {
     ]);
     const savedUrl = page.url();
     const isSaved = savedUrl.includes('message=1') || savedUrl.includes('message=6') || savedUrl.includes('action=edit');
-    if (isSaved) {
-      console.log('  ✓ Page saved successfully in WordPress!');
-    } else {
-      console.log('  ⚠️  Save clicked but confirmation URL not detected.');
-    }
+    console.log(isSaved ? '  ✓ Page saved successfully!' : '  ⚠️  Save may have completed (URL check unclear).');
   } catch (e) {
-    console.log('  ⚠️  Navigation timeout after save — page may still have saved.');
+    console.log('  ⚠️  Save navigation timeout — page may still have saved.');
   }
 }
 
-// ─── Compare all fields against live body text (full word-for-word) ─────────
+// ─── Extract live body text from frontend URL ─────────────────────────────────
+async function getLiveBodyText(page, url) {
+  console.log(`  Loading: ${url}`);
+  await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+  await page.waitForTimeout(2000);
+  const raw = await page.evaluate(() => document.body.innerText || '');
+  return cleanText(raw).toLowerCase();
+}
+
+// ─── Run field comparison and return mismatches ───────────────────────────────
 function compareFields(allFields, liveBodyClean) {
   const mismatches = [];
   let matchCount = 0;
-
   for (const field of allFields) {
     const matched = isFullMatch(field.expected, liveBodyClean);
     if (matched) {
-      console.log(`  ✅ MATCH     → ${field.name}`);
+      console.log(`  ✅ MATCH    → ${field.name}`);
       matchCount++;
     } else {
       console.log(`  ❌ MISMATCH → ${field.name}`);
-      console.log(`     Expected: "${field.expected.substring(0, 100)}"`);
-      mismatches.push({
-        name: field.name,
-        selector: field.selector,
-        expected: field.expected,
-        live: '(not found on page)'
-      });
+      console.log(`     Expected : "${field.expected.substring(0, 100)}"`);
+      mismatches.push({ ...field, live: '(not found on page)' });
     }
   }
   return { mismatches, matchCount };
@@ -317,30 +314,28 @@ function compareFields(allFields, liveBodyClean) {
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function run() {
-  console.log('==================================================');
-  console.log('Bytes Technolab — Cross-Verification & Auto-Update');
-  console.log('==================================================');
-  console.log(`Frontend URL : ${FRONTEND_VERIFY_URL}`);
-  console.log(`Source Doc   : ${SOURCE_FILE}`);
   console.log('');
+  console.log('==================================================');
+  console.log(' Bytes — Cross-Verify & Auto-Update');
+  console.log('==================================================');
+  console.log(` Frontend URL : ${FRONTEND_VERIFY_URL}`);
+  console.log(` Source Doc   : ${SOURCE_FILE}`);
+  console.log('==================================================\n');
 
-  // Step 1: Parse Google Doc
-  console.log('Step 1: Parsing source document...');
+  // ── STEP 1: Parse Google Doc ──────────────────────────────────────────────
+  console.log('STEP 1 ▶ Parsing Google Doc...');
   const parsedData = await parseFile(SOURCE_FILE);
   console.log('  ✓ Document parsed successfully.\n');
 
-  // Build the complete field list (title + subtitle + description for every section)
+  // Build all 15 fields (title + subtitle + description for every section)
   const allFields = [];
   const fields = config.selectors.fields;
   const addField = (name, key1, key2) => {
     const cfg = fields[key1]?.[key2];
     const val = parsedData[key1]?.[key2];
-    if (cfg && val) {
-      allFields.push({ name, selector: cfg.selector, expected: cleanText(val) });
-    }
+    if (cfg && val) allFields.push({ name, selector: cfg.selector, expected: cleanText(val) });
   };
 
-  // All 15 fields — every title, subtitle and description
   addField('Banner Title',              'banner',         'title');
   addField('Banner Subtitle',           'banner',         'subtitle');
   addField('Banner Bottom Right Title', 'banner',         'bottomRightTitle');
@@ -357,8 +352,8 @@ async function run() {
   addField('We Cover Subtitle',         'weCover',        'subtitle');
   addField('Technologies Title',        'technologies',   'title');
 
-  // Step 2: Launch browser
-  console.log('Step 2: Launching Chrome browser...');
+  // ── STEP 2: Launch browser ────────────────────────────────────────────────
+  console.log('STEP 2 ▶ Launching Chrome browser...\n');
   const browser = await chromium.launch({
     headless: false,
     channel: 'chrome',
@@ -378,33 +373,27 @@ async function run() {
   const page    = await context.newPage();
 
   try {
-    // Step 3: Load live frontend URL
-    console.log(`Step 3: Loading live frontend page...`);
-    console.log(`  URL: ${FRONTEND_VERIFY_URL}`);
-    await page.goto(FRONTEND_VERIFY_URL, { waitUntil: 'networkidle', timeout: 30000 });
-    await page.waitForTimeout(2000);
 
-    // Step 4: Extract full visible text
-    console.log('Step 4: Extracting full visible text from live page...');
-    const liveBodyText  = await page.evaluate(() => document.body.innerText || '');
-    const liveBodyClean = cleanText(liveBodyText).toLowerCase();
+    // ── STEP 3: Open frontend URL and compare all fields ──────────────────
+    console.log('STEP 3 ▶ Loading live frontend URL...');
+    const liveBodyClean = await getLiveBodyText(page, FRONTEND_VERIFY_URL);
 
-    // Step 5: Full word-for-word comparison
-    console.log('\nStep 5: Full word-for-word comparison of all fields...\n');
+    console.log('\nSTEP 4 ▶ Full word-for-word comparison (all titles, subtitles, descriptions):\n');
     const { mismatches, matchCount } = compareFields(allFields, liveBodyClean);
 
     console.log('\n--------------------------------------------------');
-    console.log(`  Total Fields : ${allFields.length}`);
-    console.log(`  ✅ Matched   : ${matchCount}`);
-    console.log(`  ❌ Mismatch  : ${mismatches.length}`);
+    console.log(`  Total Fields  : ${allFields.length}`);
+    console.log(`  ✅ Matched    : ${matchCount}`);
+    console.log(`  ❌ Mismatched : ${mismatches.length}`);
     console.log('--------------------------------------------------\n');
 
-    // Save verification report
+    // Save report
     const reportDir = './reports';
     if (!fs.existsSync(reportDir)) fs.mkdirSync(reportDir, { recursive: true });
-    const reportFile = `${reportDir}/cross_verify_${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+    const ts = new Date().toISOString().replace(/[:.]/g, '-');
+    const reportFile = `${reportDir}/cross_verify_${ts}.txt`;
     const reportLines = [
-      '=== BYTES CROSS-VERIFICATION REPORT (FULL WORD-FOR-WORD) ===',
+      '=== BYTES CROSS-VERIFICATION REPORT ===',
       `Frontend URL : ${FRONTEND_VERIFY_URL}`,
       `Source Doc   : ${SOURCE_FILE}`,
       `Date         : ${new Date().toLocaleString()}`,
@@ -418,35 +407,31 @@ async function run() {
       `Status: ${mismatches.length === 0 ? 'ALL FIELDS SYNCED ✅' : 'UPDATES REQUIRED ❌'}`
     ];
     fs.writeFileSync(reportFile, reportLines.join('\n'));
-    console.log(`  Report saved: ${reportFile}`);
+    console.log(`  Report saved: ${reportFile}\n`);
 
     if (mismatches.length === 0) {
-      // ─── All synced — show green popup ───
-      console.log('\n✅ All fields match the live frontend exactly. No update needed!\n');
+      // ── All good — show green popup ──
+      console.log('✅ All fields match the live frontend! No update needed.\n');
       await showSuccessPopup(page, 'All Content Is Live & Synced!');
 
     } else {
-      // ─── Step 6: Show mismatch popup ───
-      console.log(`\n⚠️  ${mismatches.length} mismatch(es) found! Showing popup...\n`);
+      // ── STEP 5: Show mismatch popup ──────────────────────────────────────
+      console.log(`STEP 5 ▶ Showing mismatch popup (${mismatches.length} field(s))...`);
       await showMismatchPopup(page, mismatches);
 
-      // ─── Step 7: Login + update WP editor ───
-      console.log('Step 6: Logging into WordPress Admin...');
+      // ── STEP 6: Login to WordPress ────────────────────────────────────────
+      console.log('STEP 6 ▶ Logging into WordPress Admin...');
       await loginToWordPress(page);
 
-      console.log('\nStep 7: Updating mismatched fields in WordPress editor...');
+      // ── STEP 7: Open editor and update all mismatched fields ──────────────
+      console.log('\nSTEP 7 ▶ Updating mismatched fields in WordPress editor...');
       await updateMismatchedFields(page, mismatches);
 
-      // ─── Step 8: Re-verify live frontend to confirm changes ───
-      console.log('\nStep 8: Re-verifying live frontend after save...');
-      console.log(`  Loading: ${FRONTEND_VERIFY_URL}`);
-      await page.goto(FRONTEND_VERIFY_URL, { waitUntil: 'networkidle', timeout: 30000 });
-      await page.waitForTimeout(2500);
+      // ── STEP 8: Reload frontend URL and re-verify everything ──────────────
+      console.log('\nSTEP 8 ▶ Reloading frontend URL to confirm changes are live...');
+      const updatedBodyClean = await getLiveBodyText(page, FRONTEND_VERIFY_URL);
 
-      const updatedBodyText  = await page.evaluate(() => document.body.innerText || '');
-      const updatedBodyClean = cleanText(updatedBodyText).toLowerCase();
-
-      console.log('\n  Post-save verification:\n');
+      console.log('\n  Final word-for-word check on live page:\n');
       let finalMismatches = 0;
       for (const field of mismatches) {
         const nowLive = isFullMatch(field.expected, updatedBodyClean);
@@ -455,15 +440,13 @@ async function run() {
       }
 
       console.log('\n--------------------------------------------------');
-      console.log(`  Updated : ${mismatches.length - finalMismatches} / ${mismatches.length} fields now live`);
       if (finalMismatches === 0) {
-        console.log('  ✅ All changes are now visible on the frontend!');
+        console.log(`  ✅ All ${mismatches.length} updated fields are now live on the frontend!`);
         console.log('--------------------------------------------------\n');
         await showSuccessPopup(page, 'All Changes Are Now Live on Frontend!');
       } else {
-        console.log(`  ⚠️  ${finalMismatches} field(s) still not visible on frontend.`);
+        console.log(`  ❌ ${finalMismatches} field(s) still not visible on frontend.`);
         console.log('--------------------------------------------------\n');
-        // Show updated mismatch list
         const stillMissing = mismatches.filter(f => !isFullMatch(f.expected, updatedBodyClean));
         await showMismatchPopup(page, stillMissing.map(f => ({ ...f, live: '(still not live after save)' })));
       }
