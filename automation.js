@@ -231,7 +231,8 @@ async function run() {
 
   // 1. Resolve Word/Text content file
   let wordDataFile = WORD_FILE_PATH;
-  if (!fs.existsSync(wordDataFile)) {
+  const isRemote = wordDataFile.startsWith('http://') || wordDataFile.startsWith('https://');
+  if (!isRemote && !fs.existsSync(wordDataFile)) {
     if (fs.existsSync('./Bytes Content Automation.docx')) {
       wordDataFile = './Bytes Content Automation.docx';
     } else if (fs.existsSync('./content.md')) {
