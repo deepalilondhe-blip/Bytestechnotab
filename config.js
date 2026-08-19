@@ -1,8 +1,9 @@
-/**
- * Configuration file for Bytes and MIS Automation Scripts.
- * Defines CSS selectors and settings for updating the WordPress admin panel
- * and verifying the frontend.
- */
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load environment variables here so they are available immediately during module initialization
+const envFile = process.env.ENV_FILE || '.env';
+dotenv.config({ path: envFile });
 
 const isMIS = (process.env.WP_ADMIN_URL || '').includes('magnetoitsolutions.com');
 
