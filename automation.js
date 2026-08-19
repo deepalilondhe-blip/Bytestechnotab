@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import * as diff from 'diff';
-import { parseFile, getRawText, parseContent } from './parser.js';
+import { parseFile, getRawText, parseContent, extractImages, saveImageFromURI } from './parser.js';
 import { config } from './config.js';
 
 // Load environment variables
@@ -245,10 +245,24 @@ async function run() {
 
   let parsedData;
   let rawExpectedText = '';
+  let extractedBannerImagePath = null;
   try {
     console.log(`Reading document: ${wordDataFile}`);
     rawExpectedText = await getRawText(wordDataFile);
     parsedData = parseContent(rawExpectedText);
+    
+    if (isRemote && wordDataFile.includes('/edit')) {
+      const htmlUrl = wordDataFile.replace(/\/edit.*$/, '/export?format=html');
+      console.log(`Fetching HTML version of Google Doc to extract inline images from: ${htmlUrl}...`);
+      const html = await getRawText(htmlUrl);
+      const images = extractImages(html);
+      const bannerImage = images.find(img => img.section === 'banner');
+      if (bannerImage) {
+        console.log('✓ Banner background image found in Google Doc! Converting to local file...');
+        extractedBannerImagePath = saveImageFromURI(bannerImage.src, 'banner_bg.png');
+        console.log(`✓ Local image saved at: ${extractedBannerImagePath}`);
+      }
+    }
   } catch (err) {
     console.error(`❌ Error parsing document content: ${err.message}`);
     process.exit(1);
@@ -684,6 +698,103 @@ async function run() {
         }
       }
 
+      // Image uploading and attaching helper
+      async function uploadAndAttachImage(fieldConf, localFilePath) {
+        if (!localFilePath || !fs.existsSync(localFilePath)) {
+          console.log(`No image path provided or file does not exist: ${localFilePath}`);
+          return;
+        }
+
+        console.log(`Setting Image Field: "${fieldConf.label}" -> Uploading "${localFilePath}"...`);
+
+        // Update the overlay card to show upload action
+        await page.evaluate(({ label, text, selector }) => {
+          const status = document.getElementById('automation-status');
+          const sourceLabel = document.getElementById('automation-source-label');
+          const sourceText = document.getElementById('automation-source-text');
+          const targetSel = document.getElementById('automation-target-selector');
+          
+          if (status) {
+            status.innerText = 'Uploading Image...';
+            status.style.background = '#d9534f';
+          }
+          if (sourceLabel) sourceLabel.innerText = label;
+          if (sourceText) sourceText.innerText = text;
+          if (targetSel) targetSel.innerText = selector || 'Custom Locator';
+        }, { label: fieldConf.label, text: `Upload file: ${path.basename(localFilePath)}`, selector: fieldConf.selector }).catch(() => {});
+
+        if (fieldConf.selector && await page.locator(fieldConf.selector).first().count().catch(() => 0) > 0) {
+          const hiddenInput = page.locator(fieldConf.selector).first();
+          const parentContainer = hiddenInput.locator('xpath=..');
+          
+          // Scroll parent container into view and highlight
+          await parentContainer.evaluate(el => {
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            el.style.outline = '4px solid #ffcc00';
+            el.style.boxShadow = '0 0 15px #ffcc00';
+          }).catch(() => {});
+          
+          await page.waitForTimeout(1000);
+
+          // Locate "Add Image" or "Edit Image" button inside the parent container (.acf-image-uploader)
+          const addImageBtn = parentContainer.locator('.button, a[data-name="add"], a[data-name="edit"]').first();
+          if (await addImageBtn.count().catch(() => 0) > 0) {
+            await addImageBtn.click();
+            
+            // Wait for media modal
+            const mediaModal = page.locator('.media-modal');
+            await mediaModal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+            
+            // Click "Upload files" tab
+            const uploadTab = mediaModal.locator('.media-menu a:has-text("Upload files"), .media-router a:has-text("Upload files")').first();
+            if (await uploadTab.count() > 0 && await uploadTab.isVisible()) {
+              await uploadTab.click();
+            }
+            
+            // Set input file
+            const fileInput = mediaModal.locator('input[type="file"]').first();
+            await fileInput.setInputFiles(localFilePath);
+            
+            // Wait for upload processing and Select button to be active
+            const selectBtn = mediaModal.locator('.media-toolbar-primary button.media-button-select, .media-toolbar-primary button.button-primary').first();
+            await page.waitForTimeout(4000); // 4 seconds processing wait
+            
+            if (await selectBtn.count() > 0 && await selectBtn.isVisible() && await selectBtn.isEnabled()) {
+              await selectBtn.click();
+              console.log(`✓ Image successfully uploaded and attached.`);
+              
+              // Highlight green
+              await parentContainer.evaluate(el => {
+                el.style.outline = '4px solid #5cb85c';
+                el.style.boxShadow = '0 0 15px #5cb85c';
+              }).catch(() => {});
+              
+              await page.evaluate(() => {
+                const status = document.getElementById('automation-status');
+                if (status) {
+                  status.innerText = 'Uploaded ✓';
+                  status.style.background = '#5cb85c';
+                }
+              }).catch(() => {});
+              
+              await page.waitForTimeout(2000);
+            } else {
+              console.warn('Select button was not enabled/clickable. Closing modal...');
+              const closeBtn = mediaModal.locator('.media-modal-close').first();
+              await closeBtn.click().catch(() => {});
+            }
+          } else {
+            console.warn('Could not find Add Image button inside container.');
+          }
+          
+          // Clear styles
+          await parentContainer.evaluate(el => {
+            el.style.outline = '';
+            el.style.boxShadow = '';
+          }).catch(() => {});
+        }
+      }
+
       // Fill in mapped sections
       if (config.selectors.fields.banner?.title) {
         await updateField(config.selectors.fields.banner.title, parsedData.banner.title);
@@ -693,6 +804,9 @@ async function run() {
       }
       if (config.selectors.fields.banner?.bottomRightTitle) {
         await updateField(config.selectors.fields.banner.bottomRightTitle, parsedData.banner.bottomRightTitle);
+      }
+      if (config.selectors.fields.banner?.image && extractedBannerImagePath) {
+        await uploadAndAttachImage(config.selectors.fields.banner.image, extractedBannerImagePath);
       }
 
       if (config.selectors.fields.buildMvp?.leftTitle) {
