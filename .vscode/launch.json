@@ -1,0 +1,45 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run Bytes Automation",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/automation.js",
+      "env": {
+        "ENV_FILE": ".env",
+        "DRY_RUN": "false"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Run MIS Automation",
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/automation.js",
+      "env": {
+        "ENV_FILE": ".env.mis",
+        "DRY_RUN": "false"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Verify Bytes Fields",
+      "program": "${workspaceFolder}/verify_fields.js",
+      "env": {
+        "ENV_FILE": ".env"
+      }
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Verify MIS Fields",
+      "program": "${workspaceFolder}/verify_fields.js",
+      "env": {
+        "ENV_FILE": ".env.mis"
+      }
+    }
+  ]
+}
