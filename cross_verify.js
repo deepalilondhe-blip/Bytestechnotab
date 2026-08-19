@@ -434,13 +434,42 @@ async function run() {
 
   // ── Service Include repeater items ─────────────────────────────────────────
   const services = parsedData.serviceInclude?.services || [];
-  const svcPattern = config.selectors.fields.serviceInclude?.serviceRepeaterPattern;
+  const svcTitlePattern = config.selectors.fields.serviceInclude?.serviceRepeaterTitlePattern;
+  const svcSubPattern   = config.selectors.fields.serviceInclude?.serviceRepeaterSubtitlePattern;
   services.forEach((svc, n) => {
-    if (svcPattern && svc.title) {
+    if (svcTitlePattern && svc.title) {
       allFields.push({
         name: `Service Item ${n + 1} Title`,
-        selector: '#' + svcPattern.replace('{N}', n),
+        selector: '#' + svcTitlePattern.replace('{N}', n),
         expected: cleanText(svc.title)
+      });
+    }
+    if (svcSubPattern && svc.subtitle) {
+      allFields.push({
+        name: `Service Item ${n + 1} Subtitle`,
+        selector: '#' + svcSubPattern.replace('{N}', n),
+        expected: cleanText(svc.subtitle)
+      });
+    }
+  });
+
+  // ── We Follow points repeater items ────────────────────────────────────────
+  const points = parsedData.weFollow?.points || [];
+  const pointTitlePattern = config.selectors.fields.weFollow?.pointsRepeaterTitlePattern;
+  const pointSubPattern   = config.selectors.fields.weFollow?.pointsRepeaterSubtitlePattern;
+  points.forEach((pt, n) => {
+    if (pointTitlePattern && pt.title) {
+      allFields.push({
+        name: `We Follow Point ${n + 1} Title`,
+        selector: '#' + pointTitlePattern.replace('{N}', n),
+        expected: cleanText(pt.title)
+      });
+    }
+    if (pointSubPattern && pt.subtitle) {
+      allFields.push({
+        name: `We Follow Point ${n + 1} Subtitle`,
+        selector: '#' + pointSubPattern.replace('{N}', n),
+        expected: cleanText(pt.subtitle)
       });
     }
   });

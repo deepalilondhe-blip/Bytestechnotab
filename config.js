@@ -60,12 +60,16 @@ export const config = {
       serviceInclude: {
         title:    { label: 'Service Include Section Title:',    selector: '#acf-field_66793d9793cee-row-2-field_667a746d00363' },
         subtitle: { label: 'Service Include Section Subtitle:', selector: '#acf-field_66793d9793cee-row-2-field_667a747400364' },
-        // Services repeater — each service title is row-{N}-field_667a888100366 inside field_667a887600365
-        serviceRepeaterPattern: 'acf-field_66793d9793cee-row-2-field_667a887600365-row-{N}-field_667a888100366'
+        // Services repeater — title: field_667a888100366, subtitle: field_667a888b00367
+        serviceRepeaterTitlePattern:    'acf-field_66793d9793cee-row-2-field_667a887600365-row-{N}-field_667a888100366',
+        serviceRepeaterSubtitlePattern: 'acf-field_66793d9793cee-row-2-field_667a887600365-row-{N}-field_667a888b00367'
       },
       weFollow: {
         title:    { label: 'We follow section Title:',    selector: '#acf-field_66793d9793cee-row-3-field_66828b6e34ad0' },
-        subtitle: { label: 'We follow section Subtitle:', selector: '#acf-field_66793d9793cee-row-3-field_66828b7334ad1' }
+        subtitle: { label: 'We follow section Subtitle:', selector: '#acf-field_66793d9793cee-row-3-field_66828b7334ad1' },
+        // Points repeater — title: field_66828bf734ad5, subtitle: field_66828bfe34ad6
+        pointsRepeaterTitlePattern:    'acf-field_66793d9793cee-row-3-field_66828bd234ad4-row-{N}-field_66828bf734ad5',
+        pointsRepeaterSubtitlePattern: 'acf-field_66793d9793cee-row-3-field_66828bd234ad4-row-{N}-field_66828bfe34ad6'
       },
       stepProcess: {
         title:       { label: 'Step Process Section Title:',       selector: '#acf-field_66793d9793cee-row-6-field_6a46079e8db41' },
