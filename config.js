@@ -8,6 +8,7 @@ dotenv.config({ path: envFile });
 const isMIS = (process.env.WP_ADMIN_URL || '').includes('magnetoitsolutions.com');
 
 export const config = {
+  searchQuery: isMIS ? '2024 Product Information Management' : 'Product Strategy',
   // WordPress Admin Selector Configuration
   selectors: {
     // Login selectors

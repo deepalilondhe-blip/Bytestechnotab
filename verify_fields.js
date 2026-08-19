@@ -14,7 +14,7 @@ const WP_PASSWORD = process.env.WP_PASSWORD || '';
 const HTTP_BASIC_AUTH_USER = process.env.HTTP_BASIC_AUTH_USER || '';
 const HTTP_BASIC_AUTH_PASS = process.env.HTTP_BASIC_AUTH_PASS || '';
 const WP_EDIT_URL = process.env.WP_EDIT_URL || '';
-const SEARCH_QUERY = '2024 Product Information Management';
+const SEARCH_QUERY = config.searchQuery || 'Product Strategy';
 const SOURCE_FILE = process.env.WORD_FILE_PATH || './content.md';
 
 const wordsToNumbers = {
