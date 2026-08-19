@@ -463,15 +463,50 @@ async function run() {
       // Field updating helper
       async function updateField(fieldConf, value) {
         if (!value) return;
-        console.log(`Setting field: "${fieldConf.label}" -> "${value.substring(0, 35)}..."`);
+        
+        let cleanValue = value;
+        const suffixesToRemove = [
+          'Ready to Simplify Your Product Data? Talk to Our PIM Experts',
+          'Talk to Our PIM Experts',
+          'Explore AI-Powered PIM',
+          'Get Your PIM Readiness Assessment',
+          'Talk to PIM Experts'
+        ];
+        for (const suffix of suffixesToRemove) {
+          if (cleanValue.endsWith(suffix)) {
+            cleanValue = cleanValue.substring(0, cleanValue.length - suffix.length).trim();
+          }
+        }
+        
+        console.log(`Setting field: "${fieldConf.label}" -> "${cleanValue.substring(0, 35)}..."`);
         
         if (fieldConf.selector && await page.locator(fieldConf.selector).first().count().catch(() => 0) > 0) {
           const locator = page.locator(fieldConf.selector).first();
+          const tagName = await locator.evaluate(el => el.tagName.toLowerCase()).catch(() => '');
+          const id = await locator.getAttribute('id').catch(() => '');
+          
+          if (tagName === 'textarea' && id && id.startsWith('acf-editor-')) {
+            console.log(`Writing content using TinyMCE API for editor ID: "${id}"...`);
+            await page.evaluate(({ editorId, val }) => {
+              if (window.tinymce && window.tinymce.get(editorId)) {
+                window.tinymce.get(editorId).setContent(val);
+                window.tinymce.get(editorId).save();
+              } else {
+                const el = document.getElementById(editorId);
+                if (el) {
+                  el.value = val;
+                  el.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+              }
+            }, { editorId: id, val: cleanValue });
+            return;
+          }
+          
           if (await locator.isVisible()) {
             await locator.scrollIntoViewIfNeeded().catch(() => {});
             await page.waitForTimeout(300);
           }
-          await locator.fill(value);
+          await locator.fill(cleanValue);
           return;
         }
         
@@ -484,13 +519,13 @@ async function run() {
           }
           const labelFor = await locator.getAttribute('for');
           if (labelFor) {
-            await page.fill(`#${labelFor}`, value);
+            await page.fill(`#${labelFor}`, cleanValue);
             return;
           }
           const container = locator.locator('xpath=..');
           const input = container.locator('input, textarea, [contenteditable="true"]').first();
           if (await input.count().catch(() => 0) > 0) {
-            await input.fill(value);
+            await input.fill(cleanValue);
             return;
           }
         }
