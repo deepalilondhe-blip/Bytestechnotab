@@ -502,12 +502,21 @@ async function run() {
             }, { editorId: id, val: cleanValue });
             updated = true;
           } else {
-            if (await locator.isVisible()) {
+            const isVisible = await locator.isVisible().catch(() => false);
+            if (!isVisible) {
+              console.log(`Field "${fieldConf.label}" is hidden (possibly inside collapsed section). Writing value directly...`);
+              await locator.evaluate((el, val) => {
+                el.value = val;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+              }, cleanValue);
+              updated = true;
+            } else {
               await locator.scrollIntoViewIfNeeded().catch(() => {});
               await page.waitForTimeout(300);
+              await locator.fill(cleanValue);
+              updated = true;
             }
-            await locator.fill(cleanValue);
-            updated = true;
           }
         } else {
           const labelLocator = page.locator(`label:has-text("${fieldConf.label}")`);
