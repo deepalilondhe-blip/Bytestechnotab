@@ -1,0 +1,43 @@
+========================================================================
+             HOW TO RUN MIS AUTOMATION SCRIPTS IN HEADED MODE
+========================================================================
+
+You can run the MIS scripts in headed mode (where the Chrome browser window opens on your screen so you can see it) using any of the following methods:
+
+------------------------------------------------------------------------
+METHOD 1: Using Batch Files (Easiest - Double-Click)
+------------------------------------------------------------------------
+In the project directory, double-click either of these files:
+
+* To run field cross-verification:
+  run_verification_mis.bat
+
+* To run the actual content update automation:
+  run_mis.bat
+
+------------------------------------------------------------------------
+METHOD 2: Using PowerShell Terminal
+------------------------------------------------------------------------
+Open PowerShell, navigate to the folder, and run:
+
+* To run field cross-verification:
+  $env:ENV_FILE = ".env.mis"; node verify_fields.js
+
+* To run the actual content update automation:
+  $env:ENV_FILE = ".env.mis"; $env:DRY_RUN = "false"; node automation.js
+
+------------------------------------------------------------------------
+METHOD 3: Using Command Prompt (CMD) Terminal
+------------------------------------------------------------------------
+Open Command Prompt, navigate to the folder, and run:
+
+* To run field cross-verification:
+  set ENV_FILE=.env.mis&& node verify_fields.js
+
+* To run the actual content update automation:
+  set ENV_FILE=.env.mis&& set DRY_RUN=false&& node automation.js
+
+========================================================================
+NOTE: Playwright is configured in `config.js` with `headless: false` by default,
+so Chrome will always open visually for both verification and automation.
+========================================================================
