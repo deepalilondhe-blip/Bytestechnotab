@@ -348,3 +348,56 @@ export async function parseFile(filePath) {
   const rawText = await getRawText(filePath);
   return parseContent(rawText);
 }
+
+/**
+ * Extracts inline base64 images from Google Doc HTML
+ * @param {string} html 
+ * @returns {Array<object>}
+ */
+export function extractImages(html) {
+  const images = [];
+  const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/g;
+  let match;
+  while ((match = imgRegex.exec(html)) !== null) {
+    const src = match[1];
+    if (src.startsWith('data:image/')) {
+      const index = match.index;
+      const after = html.substring(index + match[0].length, index + match[0].length + 1000);
+      const cleanAfter = after.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      
+      let section = 'unknown';
+      if (cleanAfter.includes('Build MVP Section')) {
+        section = 'banner';
+      } else if (cleanAfter.includes('Our Success Stories')) {
+        section = 'success_stories';
+      }
+      
+      images.push({
+        section,
+        src
+      });
+    }
+  }
+  return images;
+}
+
+/**
+ * Converts a base64 Data URI to a local file and saves it
+ * @param {string} dataURI 
+ * @param {string} filename 
+ * @returns {string} filePath
+ */
+export function saveImageFromURI(dataURI, filename) {
+  const matches = dataURI.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    throw new Error('Invalid base64 Data URI');
+  }
+  const buffer = Buffer.from(matches[2], 'base64');
+  const tempDir = './temp_images';
+  if (!fs.existsSync(tempDir)) {
+    fs.mkdirSync(tempDir, { recursive: true });
+  }
+  const filePath = path.join(tempDir, filename);
+  fs.writeFileSync(filePath, buffer);
+  return filePath;
+}
