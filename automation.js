@@ -758,9 +758,10 @@ async function run() {
             // Wait dynamically in the DOM for the Select button in the visible modal to be active (not disabled)
             console.log('Waiting for image upload to complete and Select button to become active...');
             await page.waitForFunction(() => {
-              const modal = document.querySelector('.media-modal:visible');
-              if (modal) {
-                const btn = modal.querySelector('.media-toolbar-primary button.media-button-select, .media-toolbar-primary button.button-primary, .media-toolbar-primary button');
+              const modals = Array.from(document.querySelectorAll('.media-modal'));
+              const visibleModal = modals.find(modal => modal.offsetWidth > 0 || modal.offsetHeight > 0);
+              if (visibleModal) {
+                const btn = visibleModal.querySelector('.media-toolbar-primary button.media-button-select, .media-toolbar-primary button.button-primary, .media-toolbar-primary button');
                 return btn && !btn.disabled && !btn.classList.contains('disabled');
               }
               return false;
@@ -768,9 +769,10 @@ async function run() {
             
             // Force click the active Select button using DOM click
             const clicked = await page.evaluate(() => {
-              const modal = document.querySelector('.media-modal:visible');
-              if (modal) {
-                const btn = modal.querySelector('.media-toolbar-primary button.media-button-select, .media-toolbar-primary button.button-primary, .media-toolbar-primary button');
+              const modals = Array.from(document.querySelectorAll('.media-modal'));
+              const visibleModal = modals.find(modal => modal.offsetWidth > 0 || modal.offsetHeight > 0);
+              if (visibleModal) {
+                const btn = visibleModal.querySelector('.media-toolbar-primary button.media-button-select, .media-toolbar-primary button.button-primary, .media-toolbar-primary button');
                 if (btn) {
                   btn.click();
                   return true;
