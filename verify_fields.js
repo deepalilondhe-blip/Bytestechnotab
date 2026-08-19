@@ -69,11 +69,28 @@ function solveCaptcha(equationText) {
 
 function cleanText(text) {
   if (text == null) return '';
-  return String(text)
+  let cleaned = String(text)
+    .replace(/<[^>]*>/g, '') // Strip HTML tags
     .replace(/&amp;/g, '&')
     .replace(/\u00a0/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+    
+  const suffixesToRemove = [
+    'Ready to Simplify Your Product Data? Talk to Our PIM Experts',
+    'Talk to Our PIM Experts',
+    'Explore AI-Powered PIM',
+    'Get Your PIM Readiness Assessment',
+    'Talk to PIM Experts'
+  ];
+  
+  for (const suffix of suffixesToRemove) {
+    if (cleaned.endsWith(suffix)) {
+      cleaned = cleaned.substring(0, cleaned.length - suffix.length).trim();
+    }
+  }
+  
+  return cleaned;
 }
 
 async function run() {
