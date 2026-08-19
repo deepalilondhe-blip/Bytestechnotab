@@ -784,6 +784,26 @@ async function run() {
             if (clicked) {
               console.log(`✓ Image successfully uploaded and attached.`);
               
+              // Wait 1 second for any automatic closing
+              await page.waitForTimeout(1000);
+              
+              // Dismiss visible media modal
+              await page.evaluate(() => {
+                const modals = Array.from(document.querySelectorAll('.media-modal'));
+                modals.forEach(modal => {
+                  if (modal.offsetWidth > 0 || modal.offsetHeight > 0) {
+                    const closeBtn = modal.querySelector('.media-modal-close');
+                    if (closeBtn) closeBtn.click();
+                  }
+                });
+                
+                // Hide any stuck backdrops
+                const backdrops = Array.from(document.querySelectorAll('.media-modal-backdrop'));
+                backdrops.forEach(bd => bd.style.display = 'none');
+              }).catch(() => {});
+              
+              await page.waitForTimeout(1000);
+              
               // Highlight green
               await parentContainer.evaluate(el => {
                 el.style.outline = '4px solid #5cb85c';
