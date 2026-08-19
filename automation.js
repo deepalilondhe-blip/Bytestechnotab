@@ -479,6 +479,7 @@ async function run() {
         }
         
         console.log(`Setting field: "${fieldConf.label}" -> "${cleanValue.substring(0, 35)}..."`);
+        let updated = false;
         
         if (fieldConf.selector && await page.locator(fieldConf.selector).first().count().catch(() => 0) > 0) {
           const locator = page.locator(fieldConf.selector).first();
@@ -499,37 +500,44 @@ async function run() {
                 }
               }
             }, { editorId: id, val: cleanValue });
-            return;
+            updated = true;
+          } else {
+            if (await locator.isVisible()) {
+              await locator.scrollIntoViewIfNeeded().catch(() => {});
+              await page.waitForTimeout(300);
+            }
+            await locator.fill(cleanValue);
+            updated = true;
           }
-          
-          if (await locator.isVisible()) {
-            await locator.scrollIntoViewIfNeeded().catch(() => {});
-            await page.waitForTimeout(300);
+        } else {
+          const labelLocator = page.locator(`label:has-text("${fieldConf.label}")`);
+          if (await labelLocator.first().count().catch(() => 0) > 0) {
+            const locator = labelLocator.first();
+            if (await locator.isVisible()) {
+              await locator.scrollIntoViewIfNeeded().catch(() => {});
+              await page.waitForTimeout(300);
+            }
+            const labelFor = await locator.getAttribute('for');
+            if (labelFor) {
+              await page.fill(`#${labelFor}`, cleanValue);
+              updated = true;
+            } else {
+              const container = locator.locator('xpath=..');
+              const input = container.locator('input, textarea, [contenteditable="true"]').first();
+              if (await input.count().catch(() => 0) > 0) {
+                await input.fill(cleanValue);
+                updated = true;
+              }
+            }
           }
-          await locator.fill(cleanValue);
-          return;
         }
         
-        const labelLocator = page.locator(`label:has-text("${fieldConf.label}")`);
-        if (await labelLocator.first().count().catch(() => 0) > 0) {
-          const locator = labelLocator.first();
-          if (await locator.isVisible()) {
-            await locator.scrollIntoViewIfNeeded().catch(() => {});
-            await page.waitForTimeout(300);
-          }
-          const labelFor = await locator.getAttribute('for');
-          if (labelFor) {
-            await page.fill(`#${labelFor}`, cleanValue);
-            return;
-          }
-          const container = locator.locator('xpath=..');
-          const input = container.locator('input, textarea, [contenteditable="true"]').first();
-          if (await input.count().catch(() => 0) > 0) {
-            await input.fill(cleanValue);
-            return;
-          }
+        if (updated) {
+          // Pause for 1.5 seconds so the user can easily observe the pasted content!
+          await page.waitForTimeout(1500);
+        } else {
+          console.warn(`Could not locate field for: "${fieldConf.label}"`);
         }
-        console.warn(`Could not locate field for: "${fieldConf.label}"`);
       }
 
       // Fill in mapped sections
