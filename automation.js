@@ -437,6 +437,18 @@ async function run() {
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, '3_page_editor.png') });
     console.log('✓ Editor page loaded successfully.');
 
+    // Check for WordPress Post Lock Dialog ("This post is locked")
+    const lockDialog = page.locator('#post-lock-dialog');
+    if (await lockDialog.count().catch(() => 0) > 0 && await lockDialog.isVisible()) {
+      console.log('⚠️ WordPress Post Lock Dialog detected! Attempting to take over the post...');
+      const takeoverButton = lockDialog.locator('a.button:has-text("Take Over"), .wp-tab-first');
+      if (await takeoverButton.count().catch(() => 0) > 0) {
+        await takeoverButton.click();
+        console.log('✓ Successfully clicked Take Over.');
+        await page.waitForTimeout(2000);
+      }
+    }
+
     // 6. Detect Editor and Inspect content
     const editorType = await detectEditor(page);
     pageResult.editor = editorType;
@@ -733,6 +745,17 @@ async function run() {
 
       // Save changes
       console.log('\nSaving page modifications...');
+      
+      const postLock = page.locator('#post-lock-dialog');
+      if (await postLock.count().catch(() => 0) > 0 && await postLock.isVisible()) {
+        console.log('⚠️ WordPress Post Lock Dialog detected before save! Taking over post...');
+        const takeover = postLock.locator('a.button:has-text("Take Over"), .wp-tab-first');
+        if (await takeover.count().catch(() => 0) > 0) {
+          await takeover.click();
+          await page.waitForTimeout(2000);
+        }
+      }
+
       const saveBtn = page.locator(config.selectors.saveButton);
       if (await saveBtn.isVisible()) {
         await saveBtn.click();
