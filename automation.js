@@ -460,6 +460,46 @@ async function run() {
       console.log('==================================================');
       console.log('Updating fields in Page Editor...');
 
+      // Inject visualizer overlay
+      console.log('Injecting visualizer overlay...');
+      await page.evaluate(() => {
+        if (document.getElementById('automation-helper-overlay')) return;
+        const overlay = document.createElement('div');
+        overlay.id = 'automation-helper-overlay';
+        overlay.innerHTML = `
+          <div style="font-weight: bold; border-bottom: 1px solid #444; padding-bottom: 8px; margin-bottom: 8px; color: #00a0d2; display: flex; justify-content: space-between;">
+            <span>⚡ Content Automation Visualizer</span>
+            <span id="automation-status" style="background: #0073aa; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 11px;">Active</span>
+          </div>
+          <div style="margin-bottom: 8px;">
+            <strong>Copying from Doc (Section):</strong>
+            <div id="automation-source-label" style="color: #f0ad4e; margin-top: 3px; font-size: 13px; font-weight: bold;">-</div>
+            <div id="automation-source-text" style="background: #222; padding: 6px; border-radius: 4px; font-family: monospace; font-size: 12px; margin-top: 5px; max-height: 80px; overflow-y: auto; color: #ccc;">-</div>
+          </div>
+          <div>
+            <strong>Pasting into WP Field:</strong>
+            <div id="automation-target-selector" style="color: #5cb85c; margin-top: 3px; font-size: 11px; font-family: monospace; word-break: break-all;">-</div>
+          </div>
+        `;
+        overlay.setAttribute('style', `
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          width: 450px;
+          background: rgba(0,0,0,0.85);
+          color: #fff;
+          border: 2px solid #00a0d2;
+          border-radius: 8px;
+          padding: 15px;
+          font-family: sans-serif;
+          font-size: 14px;
+          z-index: 999999;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+          transition: all 0.3s ease;
+        `);
+        document.body.appendChild(overlay);
+      }).catch(() => {});
+
       // Field updating helper
       async function updateField(fieldConf, value) {
         if (!value) return;
@@ -479,12 +519,40 @@ async function run() {
         }
         
         console.log(`Setting field: "${fieldConf.label}" -> "${cleanValue.substring(0, 35)}..."`);
+        
+        // Update the overlay card to show copy action
+        await page.evaluate(({ label, text, selector }) => {
+          const status = document.getElementById('automation-status');
+          const sourceLabel = document.getElementById('automation-source-label');
+          const sourceText = document.getElementById('automation-source-text');
+          const targetSel = document.getElementById('automation-target-selector');
+          
+          if (status) {
+            status.innerText = 'Copying & Pasting...';
+            status.style.background = '#d9534f';
+          }
+          if (sourceLabel) sourceLabel.innerText = label;
+          if (sourceText) sourceText.innerText = text;
+          if (targetSel) targetSel.innerText = selector || 'Custom Label Locator';
+        }, { label: fieldConf.label, text: cleanValue, selector: fieldConf.selector }).catch(() => {});
+
         let updated = false;
         
         if (fieldConf.selector && await page.locator(fieldConf.selector).first().count().catch(() => 0) > 0) {
           const locator = page.locator(fieldConf.selector).first();
           const tagName = await locator.evaluate(el => el.tagName.toLowerCase()).catch(() => '');
           const id = await locator.getAttribute('id').catch(() => '');
+          
+          // Scroll and Highlight target element in yellow/orange
+          await locator.evaluate(el => {
+            el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            el.style.outline = '4px solid #ffcc00';
+            el.style.boxShadow = '0 0 15px #ffcc00';
+            el.style.backgroundColor = '#fff9e6';
+          }).catch(() => {});
+          
+          // Pause so the user can look at the highlighted field and see what is about to be pasted
+          await page.waitForTimeout(1000);
           
           if (tagName === 'textarea' && id && id.startsWith('acf-editor-')) {
             console.log(`Writing content using TinyMCE API for editor ID: "${id}"...`);
@@ -512,13 +580,20 @@ async function run() {
               }, cleanValue);
               updated = true;
             } else {
-              await locator.scrollIntoViewIfNeeded().catch(() => {});
-              await page.waitForTimeout(300);
               await locator.fill(cleanValue);
               updated = true;
             }
           }
+          
+          // Highlight target element in green to show paste completed
+          await locator.evaluate(el => {
+            el.style.outline = '4px solid #5cb85c';
+            el.style.boxShadow = '0 0 15px #5cb85c';
+            el.style.backgroundColor = '#e6ffe6';
+          }).catch(() => {});
+          
         } else {
+          // Label-based fallback (for fields without direct selector mappings)
           const labelLocator = page.locator(`label:has-text("${fieldConf.label}")`);
           if (await labelLocator.first().count().catch(() => 0) > 0) {
             const locator = labelLocator.first();
@@ -527,14 +602,31 @@ async function run() {
               await page.waitForTimeout(300);
             }
             const labelFor = await locator.getAttribute('for');
-            if (labelFor) {
+            if (labelFor && await page.locator(`#${labelFor}`).count().catch(() => 0) > 0) {
+              const inputLoc = page.locator(`#${labelFor}`);
+              await inputLoc.evaluate(el => {
+                el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                el.style.outline = '4px solid #ffcc00';
+              }).catch(() => {});
+              await page.waitForTimeout(1000);
               await page.fill(`#${labelFor}`, cleanValue);
+              await inputLoc.evaluate(el => {
+                el.style.outline = '4px solid #5cb85c';
+              }).catch(() => {});
               updated = true;
             } else {
               const container = locator.locator('xpath=..');
               const input = container.locator('input, textarea, [contenteditable="true"]').first();
               if (await input.count().catch(() => 0) > 0) {
+                await input.evaluate(el => {
+                  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                  el.style.outline = '4px solid #ffcc00';
+                }).catch(() => {});
+                await page.waitForTimeout(1000);
                 await input.fill(cleanValue);
+                await input.evaluate(el => {
+                  el.style.outline = '4px solid #5cb85c';
+                }).catch(() => {});
                 updated = true;
               }
             }
@@ -542,10 +634,36 @@ async function run() {
         }
         
         if (updated) {
+          // Update status in overlay to complete
+          await page.evaluate(() => {
+            const status = document.getElementById('automation-status');
+            if (status) {
+              status.innerText = 'Pasted ✓';
+              status.style.background = '#5cb85c';
+            }
+          }).catch(() => {});
+          
           // Pause for 1.5 seconds so the user can easily observe the pasted content!
           await page.waitForTimeout(1500);
+          
+          // Clear visual highlighting styles
+          if (fieldConf.selector && await page.locator(fieldConf.selector).first().count().catch(() => 0) > 0) {
+            await page.locator(fieldConf.selector).first().evaluate(el => {
+              el.style.outline = '';
+              el.style.boxShadow = '';
+              el.style.backgroundColor = '';
+            }).catch(() => {});
+          }
         } else {
           console.warn(`Could not locate field for: "${fieldConf.label}"`);
+          await page.evaluate(() => {
+            const status = document.getElementById('automation-status');
+            if (status) {
+              status.innerText = 'Failed ❌';
+              status.style.background = '#d9534f';
+            }
+          }).catch(() => {});
+          await page.waitForTimeout(1000);
         }
       }
 
