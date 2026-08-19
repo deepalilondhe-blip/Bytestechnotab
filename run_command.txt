@@ -1,24 +1,63 @@
-=== HOW TO RUN THE AUTOMATION AND VERIFICATION SCRIPTS (PLAYWRIGHT JAVASCRIPT) ===
+================================================================================
+⚡ CONTENT AUTOMATION AND VERIFICATION COMMANDS (BYTES & MIS) ⚡
+================================================================================
 
-Ensure your Chrome browser is open in remote debugging mode on port 9222 first:
-  chrome.exe --remote-debugging-port=9222 --user-data-dir="C:\ChromeDebug"
+This file contains all the terminal commands, batch options, and configurations 
+to run the content automation and verification scripts.
 
-Option 1: Double-Click Batch Files (Recommended on Windows)
-------------------------------------------------------------
-* Double-click "run_verification.bat" to run the headed cross-verification script.
-* Double-click "run.bat" to run the content update automation script.
+All changes have been successfully committed and pushed to the GitHub repository:
+https://github.com/deepalilondhe-blip/Bytestechnotab.git
 
-Option 2: Run via Terminal (Command Prompt / PowerShell)
--------------------------------------------------------
-Navigate to the project folder:
-  cd c:\Bytestechnolab
+--------------------------------------------------------------------------------
+1. BYTES TECHNOLAB AUTOMATION (Google Doc -> Bytes Staging)
+--------------------------------------------------------------------------------
+Loads the Bytes Google Doc content, solves the login CAPTCHA, extracts and uploads 
+the inline banner background image, updates all 15 text fields, and saves the page.
 
-1. Run the Headed Cross-Verification Script:
-   node verify_fields.js
+* Dry Run Mode (Preview changes without saving):
+  PowerShell:   $env:DRY_RUN = "true"; node automation.js
+  CMD:          set DRY_RUN=true&& node automation.js
 
-2. Run the Main Content Update Automation Script:
-   npm start
-   (or: node automation.js)
+* Update Mode (Saves modifications and uploads image):
+  PowerShell:   $env:DRY_RUN = "false"; node automation.js
+  CMD:          set DRY_RUN=false&& node automation.js
 
-Note: By default, the main automation script runs in DRY_RUN mode (does not save changes). 
-To make it write and save changes, open ".env" and set "DRY_RUN=false".
+* Verification Script (Verifies staging site matches doc):
+  PowerShell/CMD: node verify_fields.js
+
+* Batch Files (Double-click from Windows Explorer):
+  - Run Bytes Update:      double-click 'run.bat'
+  - Run Bytes Verify:      double-click 'run_verification.bat'
+
+--------------------------------------------------------------------------------
+2. MIS AUTOMATION (Google Doc -> MIS Staging)
+--------------------------------------------------------------------------------
+Loads the MIS Google Doc content, logs in, updates all 11 text fields, and saves.
+
+* Dry Run Mode (Preview changes without saving):
+  PowerShell:   $env:ENV_FILE = ".env.mis"; $env:DRY_RUN = "true"; node automation.js
+  CMD:          set ENV_FILE=.env.mis&& set DRY_RUN=true&& node automation.js
+
+* Update Mode (Saves modifications):
+  PowerShell:   $env:ENV_FILE = ".env.mis"; $env:DRY_RUN = "false"; node automation.js
+  CMD:          set ENV_FILE=.env.mis&& set DRY_RUN=false&& node automation.js
+
+* Verification Script (Verifies staging site matches doc):
+  PowerShell:   $env:ENV_FILE = ".env.mis"; node verify_fields.js
+  CMD:          set ENV_FILE=.env.mis&& node verify_fields.js
+
+* Batch Files (Double-click from Windows Explorer):
+  - Run MIS Update:        double-click 'run_mis.bat'
+
+--------------------------------------------------------------------------------
+3. RUNNING VIA VS CODE USER INTERFACE (No commands needed)
+--------------------------------------------------------------------------------
+1. Open the project folder in VS Code.
+2. Open the "Run and Debug" panel (Ctrl + Shift + D).
+3. From the top dropdown menu, select one of the following configurations:
+   - "Run Bytes Automation"
+   - "Run MIS Automation"
+   - "Verify Bytes Fields"
+   - "Verify MIS Fields"
+4. Click the green Play button (or press F5) to run.
+================================================================================
