@@ -741,8 +741,8 @@ async function run() {
           if (await addImageBtn.count().catch(() => 0) > 0) {
             await addImageBtn.click();
             
-            // Wait for media modal
-            const mediaModal = page.locator('.media-modal');
+            // Wait for visible media modal
+            const mediaModal = page.locator('.media-modal:visible');
             await mediaModal.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
             
             // Click "Upload files" tab
@@ -755,9 +755,17 @@ async function run() {
             const fileInput = mediaModal.locator('input[type="file"]').first();
             await fileInput.setInputFiles(localFilePath);
             
-            // Wait for upload processing and Select button to be active
+            // Wait dynamically for upload processing and Select button to be active (not disabled)
+            const selectBtnSelector = '.media-modal:visible .media-toolbar-primary button.media-button-select, .media-modal:visible .media-toolbar-primary button.button-primary';
             const selectBtn = mediaModal.locator('.media-toolbar-primary button.media-button-select, .media-toolbar-primary button.button-primary').first();
-            await page.waitForTimeout(4000); // 4 seconds processing wait
+            
+            await selectBtn.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+            
+            // Wait for disabled state to be removed
+            await page.waitForFunction((sel) => {
+              const btn = document.querySelector(sel);
+              return btn && !btn.disabled && !btn.classList.contains('disabled');
+            }, selectBtnSelector, { timeout: 15000 }).catch(() => {});
             
             if (await selectBtn.count() > 0 && await selectBtn.isVisible() && await selectBtn.isEnabled()) {
               await selectBtn.click();
