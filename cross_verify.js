@@ -220,51 +220,9 @@ async function updateMismatchedFields(page, mismatches) {
 
     if (count > 0) {
       await locator.scrollIntoViewIfNeeded().catch(() => {});
-      await page.waitForTimeout(300);
-
-      // Highlight orange = updating
-      await locator.evaluate(el => {
-        el.style.outline = '3px solid #f39c12';
-        el.style.boxShadow = '0 0 12px #f39c12';
-      }).catch(() => {});
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(200);
 
       const isVisible = await locator.isVisible();
-
-      // ── Smooth scroll into center of screen (visible in headed mode) ──
-      await locator.evaluate(el => {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }).catch(() => {});
-      await page.waitForTimeout(500);
-
-      // ── Show animated overlay label above the field ───────────────────
-      await locator.evaluate((el, name) => {
-        const old = document.getElementById('cv-field-label');
-        if (old) old.remove();
-        const rect = el.getBoundingClientRect();
-        const lbl = document.createElement('div');
-        lbl.id = 'cv-field-label';
-        lbl.style.cssText = `
-          position:fixed;
-          top:${Math.max(rect.top + window.scrollY - 36, 8)}px;
-          left:${rect.left}px;
-          background:#f39c12;color:#000;
-          font-size:12px;font-weight:bold;
-          padding:4px 10px;border-radius:4px;
-          z-index:999999;pointer-events:none;
-          box-shadow:0 2px 8px rgba(0,0,0,0.4);
-        `;
-        lbl.textContent = '✏️ Updating: ' + name;
-        document.body.appendChild(lbl);
-      }, field.name).catch(() => {});
-
-      // ── Orange highlight = typing in progress ─────────────────────────
-      await locator.evaluate(el => {
-        el.style.outline = '3px solid #f39c12';
-        el.style.boxShadow = '0 0 16px rgba(243,156,18,0.8)';
-        el.style.transition = 'all 0.3s ease';
-      }).catch(() => {});
-      await page.waitForTimeout(300);
 
       if (isVisible) {
         await locator.click({ force: true }).catch(() => {});
@@ -278,19 +236,7 @@ async function updateMismatchedFields(page, mismatches) {
           el.dispatchEvent(new Event('change', { bubbles: true }));
         }, field.expected);
       }
-      await page.waitForTimeout(300);
-
-      // ── Green highlight = done ─────────────────────────────────────────
-      await locator.evaluate(el => {
-        el.style.outline = '3px solid #27ae60';
-        el.style.boxShadow = '0 0 16px rgba(39,174,96,0.8)';
-      }).catch(() => {});
-
-      // Remove overlay label
-      await page.evaluate(() => {
-        const lbl = document.getElementById('cv-field-label');
-        if (lbl) lbl.remove();
-      }).catch(() => {});
+      await page.waitForTimeout(200);
 
       console.log(`  ✓ Updated: ${field.name}`);
     } else {
@@ -470,6 +416,37 @@ async function run() {
         name: `We Follow Point ${n + 1} Subtitle`,
         selector: '#' + pointSubPattern.replace('{N}', n),
         expected: cleanText(pt.subtitle)
+      });
+    }
+  });
+
+  // ── Industry Specific section header ──────────────────────────────────────
+  const indFields = config.selectors.fields.industrySpecific;
+  if (indFields?.title?.selector && parsedData.industrySpecific?.title) {
+    allFields.push({
+      name: 'Industry Section Title',
+      selector: indFields.title.selector,
+      expected: cleanText(parsedData.industrySpecific.title)
+    });
+  }
+
+  // ── Industry Specific repeater items ──────────────────────────────────────
+  const industries = parsedData.industrySpecific?.industries || [];
+  const indTitlePattern = config.selectors.fields.industrySpecific?.industryRepeaterTitlePattern;
+  const indSubPattern   = config.selectors.fields.industrySpecific?.industryRepeaterSubtitlePattern;
+  industries.forEach((ind, n) => {
+    if (indTitlePattern && ind.title) {
+      allFields.push({
+        name: `Industry ${n + 1} Title`,
+        selector: '#' + indTitlePattern.replace('{N}', n),
+        expected: cleanText(ind.title)
+      });
+    }
+    if (indSubPattern && ind.subtitle) {
+      allFields.push({
+        name: `Industry ${n + 1} Subtitle`,
+        selector: '#' + indSubPattern.replace('{N}', n),
+        expected: cleanText(ind.subtitle)
       });
     }
   });
