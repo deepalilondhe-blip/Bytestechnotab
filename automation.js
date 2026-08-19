@@ -755,20 +755,31 @@ async function run() {
             const fileInput = mediaModal.locator('input[type="file"]').first();
             await fileInput.setInputFiles(localFilePath);
             
-            // Wait dynamically for upload processing and Select button to be active (not disabled)
-            const selectBtnSelector = '.media-modal:visible .media-toolbar-primary button.media-button-select, .media-modal:visible .media-toolbar-primary button.button-primary';
-            const selectBtn = mediaModal.locator('.media-toolbar-primary button.media-button-select, .media-toolbar-primary button.button-primary').first();
+            // Wait dynamically in the DOM for the Select button in the visible modal to be active (not disabled)
+            console.log('Waiting for image upload to complete and Select button to become active...');
+            await page.waitForFunction(() => {
+              const modal = document.querySelector('.media-modal:visible');
+              if (modal) {
+                const btn = modal.querySelector('.media-toolbar-primary button.media-button-select, .media-toolbar-primary button.button-primary, .media-toolbar-primary button');
+                return btn && !btn.disabled && !btn.classList.contains('disabled');
+              }
+              return false;
+            }, { timeout: 20000 }).catch(() => {});
             
-            await selectBtn.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+            // Force click the active Select button using DOM click
+            const clicked = await page.evaluate(() => {
+              const modal = document.querySelector('.media-modal:visible');
+              if (modal) {
+                const btn = modal.querySelector('.media-toolbar-primary button.media-button-select, .media-toolbar-primary button.button-primary, .media-toolbar-primary button');
+                if (btn) {
+                  btn.click();
+                  return true;
+                }
+              }
+              return false;
+            });
             
-            // Wait for disabled state to be removed
-            await page.waitForFunction((sel) => {
-              const btn = document.querySelector(sel);
-              return btn && !btn.disabled && !btn.classList.contains('disabled');
-            }, selectBtnSelector, { timeout: 15000 }).catch(() => {});
-            
-            if (await selectBtn.count() > 0 && await selectBtn.isVisible() && await selectBtn.isEnabled()) {
-              await selectBtn.click();
+            if (clicked) {
               console.log(`✓ Image successfully uploaded and attached.`);
               
               // Highlight green
