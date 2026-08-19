@@ -321,12 +321,12 @@ async function run() {
     }
   } finally {
     if (browser) {
-      if (isConnectedOverCDP) {
-        await browser.close();
-      } else {
-        console.log('\nVerification complete. Leaving Chrome browser open for you to inspect.');
-      }
+      console.log('\nClosing Chrome browser...');
+      await browser.close();
     }
+    console.log('\n==================================================');
+    console.log('✓ Verification Completed Successfully!');
+    console.log('==================================================\n');
   }
 }
 

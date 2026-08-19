@@ -786,17 +786,15 @@ async function run() {
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, 'error_state.png') }).catch(() => {});
   } finally {
     if (browser) {
-      if (isConnectedOverCDP) {
-        console.log('\nClosing browser context...');
-        await browser.close();
-      } else {
-        console.log('\nAutomation run complete. Leaving Chrome browser open for you to inspect.');
-      }
+      console.log('\nClosing Chrome browser...');
+      await browser.close();
     }
     
     results.push(pageResult);
     saveReport(results);
-    console.log('Done.');
+    console.log('\n==================================================');
+    console.log('✓ Content Automation Completed Successfully!');
+    console.log('==================================================\n');
   }
 }
 
