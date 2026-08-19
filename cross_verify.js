@@ -230,24 +230,66 @@ async function updateMismatchedFields(page, mismatches) {
       await page.waitForTimeout(300);
 
       const isVisible = await locator.isVisible();
+
+      // ── Smooth scroll into center of screen (visible in headed mode) ──
+      await locator.evaluate(el => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }).catch(() => {});
+      await page.waitForTimeout(500);
+
+      // ── Show animated overlay label above the field ───────────────────
+      await locator.evaluate((el, name) => {
+        const old = document.getElementById('cv-field-label');
+        if (old) old.remove();
+        const rect = el.getBoundingClientRect();
+        const lbl = document.createElement('div');
+        lbl.id = 'cv-field-label';
+        lbl.style.cssText = `
+          position:fixed;
+          top:${Math.max(rect.top + window.scrollY - 36, 8)}px;
+          left:${rect.left}px;
+          background:#f39c12;color:#000;
+          font-size:12px;font-weight:bold;
+          padding:4px 10px;border-radius:4px;
+          z-index:999999;pointer-events:none;
+          box-shadow:0 2px 8px rgba(0,0,0,0.4);
+        `;
+        lbl.textContent = '✏️ Updating: ' + name;
+        document.body.appendChild(lbl);
+      }, field.name).catch(() => {});
+
+      // ── Orange highlight = typing in progress ─────────────────────────
+      await locator.evaluate(el => {
+        el.style.outline = '3px solid #f39c12';
+        el.style.boxShadow = '0 0 16px rgba(243,156,18,0.8)';
+        el.style.transition = 'all 0.3s ease';
+      }).catch(() => {});
+      await page.waitForTimeout(300);
+
       if (isVisible) {
         await locator.click({ force: true }).catch(() => {});
-        await locator.fill('');                 // clear existing value first
-        await locator.fill(field.expected);     // fill exact doc value
+        await locator.fill('');                // clear first
+        await locator.fill(field.expected);   // fill exact doc value
       } else {
-        // Hidden/collapsed field — write via JS and fire events
+        // Hidden/collapsed — write via JS and fire input/change events
         await locator.evaluate((el, val) => {
           el.value = val;
           el.dispatchEvent(new Event('input',  { bubbles: true }));
           el.dispatchEvent(new Event('change', { bubbles: true }));
         }, field.expected);
       }
-      await page.waitForTimeout(200);
+      await page.waitForTimeout(300);
 
-      // Highlight green = done
+      // ── Green highlight = done ─────────────────────────────────────────
       await locator.evaluate(el => {
         el.style.outline = '3px solid #27ae60';
-        el.style.boxShadow = '0 0 12px #27ae60';
+        el.style.boxShadow = '0 0 16px rgba(39,174,96,0.8)';
+      }).catch(() => {});
+
+      // Remove overlay label
+      await page.evaluate(() => {
+        const lbl = document.getElementById('cv-field-label');
+        if (lbl) lbl.remove();
       }).catch(() => {});
 
       console.log(`  ✓ Updated: ${field.name}`);
@@ -285,12 +327,36 @@ async function updateMismatchedFields(page, mismatches) {
   }
 }
 
-// ─── Extract live body text from frontend URL ─────────────────────────────────
+// ─── Extract ALL text from frontend (including hidden/carousel elements) ──────
+// Uses textContent (not innerText) to capture text inside hidden tabs,
+// accordions, carousels, and JS-rendered components that innerText misses.
 async function getLiveBodyText(page, url) {
   console.log(`  Loading: ${url}`);
   await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
-  await page.waitForTimeout(2000);
-  const raw = await page.evaluate(() => document.body.innerText || '');
+  await page.waitForTimeout(3000); // wait for JS-rendered content
+
+  const raw = await page.evaluate(() => {
+    // Walk all text nodes including hidden ones
+    const walker = document.createTreeWalker(
+      document.body,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode(node) {
+          const tag = node.parentElement?.tagName?.toLowerCase();
+          // Skip script/style/noscript nodes
+          if (['script','style','noscript','meta'].includes(tag)) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+    const texts = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      const t = node.textContent.trim();
+      if (t.length > 1) texts.push(t);
+    }
+    return texts.join(' ');
+  });
   return cleanText(raw).toLowerCase();
 }
 
