@@ -45,33 +45,43 @@ export const config = {
       }
     } : {
       banner: {
-        title: { label: 'Banner Section Title:', selector: '#acf-field_66793d9793cee-row-0-field_66793e870f36c' },
-        subtitle: { label: 'Banner Section Sub Title:', selector: '#acf-field_66793d9793cee-row-0-field_66793ebe60bdb' },
-        bottomRightTitle: { label: 'Banner Section Banner Bottom Right Title:', selector: '#acf-field_66793d9793cee-row-0-field_667a73a31f078' }
+        title:           { label: 'Banner Section Title:',                selector: '#acf-field_66793d9793cee-row-0-field_66793e870f36c' },
+        subtitle:        { label: 'Banner Section Sub Title:',             selector: '#acf-field_66793d9793cee-row-0-field_66793ebe60bdb' },
+        bottomRightTitle:{ label: 'Banner Section Banner Bottom Right Title:', selector: '#acf-field_66793d9793cee-row-0-field_667a73a31f078' },
+        image:           { label: 'Banner Background Image',               selector: 'input[name="acf[field_66793d9793cee][row-0][field_66793e7a0f36b]"]' }
       },
       buildMvp: {
-        leftTitle: { label: 'Build MVP Section Left Title:', selector: '#acf-field_66793d9793cee-row-1-field_66ec15dcb7ec8' },
+        leftTitle:    { label: 'Build MVP Section Left Title:',    selector: '#acf-field_66793d9793cee-row-1-field_66ec15dcb7ec8' },
         leftSubtitle: { label: 'Build MVP Section Left Subtitle:', selector: '#acf-field_66793d9793cee-row-1-field_66ec15e3b7ec9' },
-        rightTitle: { label: 'Build MVP Section Right Title:', selector: '#acf-field_66793d9793cee-row-1-field_66ec1649b7ecd' }
+        rightTitle:   { label: 'Build MVP Section Right Title:',   selector: '#acf-field_66793d9793cee-row-1-field_66ec1649b7ecd' },
+        // Right Subtitles repeater — each bullet is row-{N}-field_66ec165ab7ecf inside field_66ec164fb7ece
+        rightSubtitleRepeaterPattern: 'acf-field_66793d9793cee-row-1-field_66ec164fb7ece-row-{N}-field_66ec165ab7ecf'
       },
       serviceInclude: {
-        title: { label: 'Service Include Section Title:', selector: '#acf-field_66793d9793cee-row-2-field_667a746d00363' },
-        subtitle: { label: 'Service Include Section Subtitle:', selector: '#acf-field_66793d9793cee-row-2-field_667a747400364' }
+        title:    { label: 'Service Include Section Title:',    selector: '#acf-field_66793d9793cee-row-2-field_667a746d00363' },
+        subtitle: { label: 'Service Include Section Subtitle:', selector: '#acf-field_66793d9793cee-row-2-field_667a747400364' },
+        // Services repeater — each service title is row-{N}-field_667a888100366 inside field_667a887600365
+        serviceRepeaterPattern: 'acf-field_66793d9793cee-row-2-field_667a887600365-row-{N}-field_667a888100366'
       },
       weFollow: {
-        title: { label: 'We follow section Title:', selector: '#acf-field_66793d9793cee-row-3-field_66828b6e34ad0' },
+        title:    { label: 'We follow section Title:',    selector: '#acf-field_66793d9793cee-row-3-field_66828b6e34ad0' },
         subtitle: { label: 'We follow section Subtitle:', selector: '#acf-field_66793d9793cee-row-3-field_66828b7334ad1' }
       },
       stepProcess: {
-        title: { label: 'Step Process Section Title:', selector: '#acf-field_66793d9793cee-row-6-field_6a46079e8db41' },
-        description: { label: 'Step Process Section Description:', selector: '#acf-field_66793d9793cee-row-6-field_6a4607c98db42' }
+        title:       { label: 'Step Process Section Title:',       selector: '#acf-field_66793d9793cee-row-6-field_6a46079e8db41' },
+        description: { label: 'Step Process Section Description:', selector: '#acf-field_66793d9793cee-row-6-field_6a4607c98db42' },
+        // Steps repeater — step title: row-{N}-field_6a460a808db45, content title: row-{N}-field_6a460a8d8db46, description: row-{N}-field_6a460ae08db47
+        stepRepeaterTitlePattern:       'acf-field_66793d9793cee-row-6-field_6a4609378db43-row-{N}-field_6a460a808db45',
+        stepRepeaterContentTitle:       'acf-field_66793d9793cee-row-6-field_6a4609378db43-row-{N}-field_6a460a8d8db46',
+        stepRepeaterDescriptionPattern: 'acf-field_66793d9793cee-row-6-field_6a4609378db43-row-{N}-field_6a460ae08db47'
       },
       weCover: {
-        title: { label: 'We cover section Title:', selector: '#acf-field_66793d9793cee-row-10-field_6679491d3ddc9' },
+        title:    { label: 'We cover section Title:',    selector: '#acf-field_66793d9793cee-row-10-field_6679491d3ddc9' },
         subtitle: { label: 'We cover section Subtitle:', selector: '#acf-field_66793d9793cee-row-10-field_66829964303d3' }
       },
       technologies: {
-        title: { label: 'Technologies We work section Title:', selector: '#acf-field_66793d9793cee-row-11-field_667d464d337c1' }
+        title:    { label: 'Technologies We work section Title:',    selector: '#acf-field_66793d9793cee-row-11-field_667d464d337c1' },
+        subtitle: { label: 'Technologies We work section Subtitle:', selector: '#acf-field_66793d9793cee-row-11-field_667d4654337c2' }
       }
     },
     saveButton: '#publish, #save-post' // WordPress publish or save draft button

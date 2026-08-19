@@ -351,6 +351,54 @@ async function run() {
   addField('We Cover Title',            'weCover',        'title');
   addField('We Cover Subtitle',         'weCover',        'subtitle');
   addField('Technologies Title',        'technologies',   'title');
+  addField('Technologies Subtitle',     'technologies',   'subtitle');
+
+  // ── Build MVP Right Subtitle bullet items (repeater) ──────────────────────
+  const challenges = parsedData.buildMvp?.challenges || [];
+  const rightSubPattern = config.selectors.fields.buildMvp?.rightSubtitleRepeaterPattern;
+  challenges.forEach((item, n) => {
+    if (rightSubPattern && item) {
+      allFields.push({
+        name: `Build MVP Right Subtitle ${n + 1}`,
+        selector: '#' + rightSubPattern.replace('{N}', n),
+        expected: cleanText(item)
+      });
+    }
+  });
+
+  // ── Service Include repeater items ─────────────────────────────────────────
+  const services = parsedData.serviceInclude?.services || [];
+  const svcPattern = config.selectors.fields.serviceInclude?.serviceRepeaterPattern;
+  services.forEach((svc, n) => {
+    if (svcPattern && svc.title) {
+      allFields.push({
+        name: `Service Item ${n + 1} Title`,
+        selector: '#' + svcPattern.replace('{N}', n),
+        expected: cleanText(svc.title)
+      });
+    }
+  });
+
+  // ── Step Process repeater items ────────────────────────────────────────────
+  const steps = parsedData.stepProcess?.steps || [];
+  const stepTitlePattern = config.selectors.fields.stepProcess?.stepRepeaterTitlePattern;
+  const stepDescPattern  = config.selectors.fields.stepProcess?.stepRepeaterDescriptionPattern;
+  steps.forEach((step, n) => {
+    if (stepTitlePattern && step.title) {
+      allFields.push({
+        name: `Step ${n + 1} Title`,
+        selector: '#' + stepTitlePattern.replace('{N}', n),
+        expected: cleanText(step.title)
+      });
+    }
+    if (stepDescPattern && step.description) {
+      allFields.push({
+        name: `Step ${n + 1} Description`,
+        selector: '#' + stepDescPattern.replace('{N}', n),
+        expected: cleanText(step.description)
+      });
+    }
+  });
 
   // ── STEP 2: Launch browser ────────────────────────────────────────────────
   console.log('STEP 2 ▶ Launching Chrome browser...\n');
