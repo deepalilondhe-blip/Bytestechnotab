@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import * as diff from 'diff';
-import { parseFile } from './parser.js';
+import { parseFile, getRawText, parseContent } from './parser.js';
 import { config } from './config.js';
 
 // Load environment variables
@@ -247,17 +247,8 @@ async function run() {
   let rawExpectedText = '';
   try {
     console.log(`Reading document: ${wordDataFile}`);
-    parsedData = await parseFile(wordDataFile);
-    
-    // Flatten paragraphs for similarity check
-    if (wordDataFile.endsWith('.docx')) {
-      const mammothResult = await fs.promises.readFile(wordDataFile);
-      // We can extract raw paragraphs just like your friend's code did
-      rawExpectedText = normalizeText(fs.readFileSync('./content.md', 'utf8').split('---')[1] || fs.readFileSync('./content.md', 'utf8'));
-    } else {
-      // It's a text/markdown file
-      rawExpectedText = fs.readFileSync(wordDataFile, 'utf8');
-    }
+    rawExpectedText = await getRawText(wordDataFile);
+    parsedData = parseContent(rawExpectedText);
   } catch (err) {
     console.error(`❌ Error parsing document content: ${err.message}`);
     process.exit(1);
