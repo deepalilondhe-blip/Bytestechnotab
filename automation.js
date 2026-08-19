@@ -439,13 +439,18 @@ async function run() {
 
     // Check for WordPress Post Lock Dialog ("This post is locked")
     const lockDialog = page.locator('#post-lock-dialog');
-    if (await lockDialog.count().catch(() => 0) > 0 && await lockDialog.isVisible()) {
+    const hasLock = await lockDialog.waitFor({ state: 'visible', timeout: 2000 })
+      .then(() => true)
+      .catch(() => false);
+      
+    if (hasLock) {
       console.log('⚠️ WordPress Post Lock Dialog detected! Attempting to take over the post...');
       const takeoverButton = lockDialog.locator('a.button:has-text("Take Over"), .wp-tab-first');
       if (await takeoverButton.count().catch(() => 0) > 0) {
         await takeoverButton.click();
         console.log('✓ Successfully clicked Take Over.');
-        await page.waitForTimeout(2000);
+        await lockDialog.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+        await page.waitForTimeout(1000);
       }
     }
 
@@ -747,12 +752,17 @@ async function run() {
       console.log('\nSaving page modifications...');
       
       const postLock = page.locator('#post-lock-dialog');
-      if (await postLock.count().catch(() => 0) > 0 && await postLock.isVisible()) {
+      const hasSaveLock = await postLock.waitFor({ state: 'visible', timeout: 1000 })
+        .then(() => true)
+        .catch(() => false);
+        
+      if (hasSaveLock) {
         console.log('⚠️ WordPress Post Lock Dialog detected before save! Taking over post...');
         const takeover = postLock.locator('a.button:has-text("Take Over"), .wp-tab-first');
         if (await takeover.count().catch(() => 0) > 0) {
           await takeover.click();
-          await page.waitForTimeout(2000);
+          await postLock.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+          await page.waitForTimeout(1000);
         }
       }
 
