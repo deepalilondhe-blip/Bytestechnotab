@@ -15,7 +15,7 @@ const HTTP_BASIC_AUTH_USER = process.env.HTTP_BASIC_AUTH_USER || '';
 const HTTP_BASIC_AUTH_PASS = process.env.HTTP_BASIC_AUTH_PASS || '';
 const WP_EDIT_URL = process.env.WP_EDIT_URL || '';
 const SEARCH_QUERY = '2024 Product Information Management';
-const SOURCE_FILE = './content.md';
+const SOURCE_FILE = process.env.WORD_FILE_PATH || './content.md';
 
 const wordsToNumbers = {
   zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10,
