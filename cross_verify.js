@@ -134,8 +134,10 @@ async function showMismatchPopup(page, mismatches) {
     document.body.appendChild(overlay);
   }, { rows, count });
 
-  console.log('  → Popup shown on screen. Waiting 4 seconds...');
-  await page.waitForTimeout(4000);
+  console.log('\n  → Script finished. Waiting 15 seconds so you can manually click Update if it failed...');
+  await page.waitForTimeout(15000);
+
+  console.log('\nClosing Chrome browser...');
 }
 
 // ─── Show success popup ───────────────────────────────────────────────────────
@@ -225,11 +227,17 @@ async function updateMismatchedFields(page, mismatches) {
 
     // Auto-add rows for Industries if missing
     if (count === 0 && field.name.startsWith('Industry')) {
-      const addRowBtn = page.locator('[data-key="field_66acdba41bff5"] > .acf-input > .acf-repeater > .acf-actions > a[data-event="add-row"]');
+      const addRowBtn = page.locator('[data-key="field_66acdba41bff5"] .acf-actions a[data-event="add-row"]');
       if (await addRowBtn.count() > 0) {
-        console.log(`  Row missing for ${field.name}! Clicking Add Row...`);
-        await addRowBtn.last().evaluate(el => el.click()).catch(() => {});
-        await page.waitForTimeout(1500); // Wait for animation
+        console.log(`  Row missing for ${field.name}! Clicking Add Row via jQuery...`);
+        await addRowBtn.last().evaluate(el => {
+          if (typeof window.jQuery !== 'undefined') {
+            window.jQuery(el).trigger('click');
+          } else {
+            el.click();
+          }
+        }).catch(() => {});
+        await page.waitForTimeout(2000); // Wait for animation
         locator = page.locator(field.selector); // re-evaluate
         count = await locator.count();
       }
@@ -593,6 +601,8 @@ async function run() {
     console.error('\n❌ Error during cross-verification:', err.message);
     if (page) await page.screenshot({ path: './cross_verify_error.png' }).catch(() => {});
   } finally {
+    console.log('\n  → Script finished! Waiting 15 seconds before closing so you can click Update manually if it failed...');
+    await page.waitForTimeout(15000);
     console.log('\nClosing Chrome browser...');
     await browser.close();
     console.log('\n==================================================');
