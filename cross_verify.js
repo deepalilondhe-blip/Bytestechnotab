@@ -220,8 +220,20 @@ async function updateMismatchedFields(page, mismatches) {
   console.log(`\n  Updating ${mismatches.length} field(s):\n`);
 
   for (const field of mismatches) {
-    const locator = page.locator(field.selector);
-    const count   = await locator.count();
+    let locator = page.locator(field.selector);
+    let count   = await locator.count();
+
+    // Auto-add rows for Industries if missing
+    if (count === 0 && field.name.startsWith('Industry')) {
+      const addRowBtn = page.locator('[data-key="field_66acdba41bff5"] > .acf-input > .acf-repeater > .acf-actions > a[data-event="add-row"]');
+      if (await addRowBtn.count() > 0) {
+        console.log(`  Row missing for ${field.name}! Clicking Add Row...`);
+        await addRowBtn.last().evaluate(el => el.click()).catch(() => {});
+        await page.waitForTimeout(1500); // Wait for animation
+        locator = page.locator(field.selector); // re-evaluate
+        count = await locator.count();
+      }
+    }
 
     if (count > 0) {
       await locator.scrollIntoViewIfNeeded().catch(() => {});
