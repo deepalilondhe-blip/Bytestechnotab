@@ -27,30 +27,25 @@ const wordsToNumbers = {
 };
 
 function solveCaptcha(equationText) {
-  const clean = equationText
-    .replace(/=/g, '').replace(/−/g, '-').replace(/–/g, '-')
-    .replace(/—/g, '-').replace(/×/g, '*').replace(/\bx\b/g, '*')
-    .replace(/÷/g, '/').trim().toLowerCase();
-
+  const clean = equationText.replace(/=/g, '').replace(/−/g, '-').replace(/-/g, '-').replace(/×/g, '*').replace(/\bx\b/g, '*').replace(/÷/g, '/').trim().toLowerCase();
   let operator = '', parts = [];
   if (clean.includes('+') || clean.includes('plus')) {
     operator = '+'; parts = clean.split(/\+|\bplus\b/);
   } else if (clean.includes('-') || clean.includes('minus')) {
     operator = '-'; parts = clean.split(/-|\bminus\b/);
   } else if (clean.includes('*') || clean.includes('times')) {
-    operator = '*'; parts = clean.split(/\*|\btimes\b|\bmultiply\b/);
-  } else throw new Error(`Unknown operator: ${equationText}`);
-
-  const parseVal = (s) => {
-    const t = s.trim();
-    if (/^\d+$/.test(t)) return parseInt(t, 10);
-    if (wordsToNumbers[t] !== undefined) return wordsToNumbers[t];
-    throw new Error(`Could not parse: "${t}"`);
-  };
-  const v1 = parseVal(parts[0]), v2 = parseVal(parts[1]);
-  if (operator === '+') return v1 + v2;
-  if (operator === '-') return v1 - v2;
-  if (operator === '*') return v1 * v2;
+    operator = '*'; parts = clean.split(/\*|\btimes\b/);
+  } else {
+    throw new Error('Unknown operator in captcha: ' + clean);
+  }
+  const aStr = parts[0].trim();
+  const bStr = parts[1].trim();
+  const a = wordsToNumbers[aStr] !== undefined ? wordsToNumbers[aStr] : parseInt(aStr, 10);
+  const b = wordsToNumbers[bStr] !== undefined ? wordsToNumbers[bStr] : parseInt(bStr, 10);
+  if (isNaN(a) || isNaN(b)) throw new Error('Could not parse numbers from captcha: ' + clean);
+  if (operator === '+') return a + b;
+  if (operator === '-') return a - b;
+  if (operator === '*') return a * b;
   return 0;
 }
 
@@ -179,12 +174,20 @@ async function loginToWordPress(page) {
     console.log('  Login form found. Logging in...');
     await page.fill('#user_login', WP_USERNAME);
     await page.fill('#user_pass', WP_PASSWORD);
-    const captchaLocator = page.locator('.aiowps-captcha-equation');
-    if (await captchaLocator.isVisible()) {
-      const eq = await captchaLocator.innerText();
-      const solution = solveCaptcha(eq);
-      console.log(`  Solving captcha: "${eq}" = ${solution}`);
-      await page.fill('.aiowps-captcha-answer', solution.toString());
+    const captchaLabel = page.locator('.login .math-captcha-equation, .math-captcha label, label[for="jetpack_protect_answer"], .aiowps-captcha-equation, label[for="math_captcha"]');
+    if (await captchaLabel.count() > 0) {
+      const text = await captchaLabel.first().textContent();
+      console.log(`  Found captcha: "${text}"`);
+      try {
+        const solution = solveCaptcha(text);
+        console.log(`  Solving captcha: "${text}" = ${solution}`);
+        const captchaInput = page.locator('input[type="text"][name*="captcha"], input[type="number"][name*="captcha"], input[type="text"][id*="captcha"], input[type="number"][id*="captcha"], input[name="jetpack_protect_num"], input.aiowps-captcha-answer');
+        if (await captchaInput.count() > 0) {
+          await captchaInput.first().fill(solution.toString());
+        }
+      } catch (e) {
+        console.log('  Failed to parse captcha:', e.message);
+      }
     }
     await page.click('#wp-submit');
     await Promise.race([

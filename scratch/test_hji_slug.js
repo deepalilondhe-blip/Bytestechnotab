@@ -1,0 +1,28 @@
+import { chromium } from 'playwright';
+
+(async () => {
+  const browser = await chromium.launch({ headless: false, channel: 'chrome' });
+  const context = await browser.newContext({
+    httpCredentials: {
+      username: "magnetoback",
+      password: "R{]1XR]p6c5zl9MZ}l9j3"
+    }
+  });
+  const page = await context.newPage();
+  
+  const url = 'https://staging.magnetoitsolutions.com/HjiMvLE1D6ycKpE/';
+  console.log(`Navigating to: ${url} with 30s timeout...`);
+  try {
+    await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+    const isLoginVisible = await page.locator('#user_login').count() > 0;
+    console.log(`Url: ${url} | Login form found: ${isLoginVisible}`);
+    await page.screenshot({ path: './test_hji_slug_result.png' });
+    console.log('Saved screenshot to test_hji_slug_result.png');
+  } catch (err) {
+    console.log(`Error: ${err.message}`);
+    await page.screenshot({ path: './test_hji_slug_error.png' });
+    console.log('Saved error screenshot');
+  }
+  
+  await browser.close();
+})();

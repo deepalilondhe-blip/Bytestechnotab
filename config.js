@@ -72,10 +72,9 @@ export const config = {
         pointsRepeaterSubtitlePattern: 'acf-field_66793d9793cee-row-3-field_66828bd234ad4-row-{N}-field_66828bfe34ad6'
       },
       industrySpecific: {
-        title:    { label: 'Industry Section Title:',    selector: '#acf-field_66793d9793cee-row-4-field_69e1d5f9afbf2' },
-        // Industries repeater (row-4 → field_69e1d5f9afbf7) — title: field_69e1d5f9afbf8, subtitle: field_69e1d5f9afbf9
-        industryRepeaterTitlePattern:    'acf-field_66793d9793cee-row-4-field_69e1d5f9afbf7-row-{N}-field_69e1d5f9afbf8',
-        industryRepeaterSubtitlePattern: 'acf-field_66793d9793cee-row-4-field_69e1d5f9afbf7-row-{N}-field_69e1d5f9afbf9'
+        title: { label: 'Industry Section Title', selector: '#acf-field_66793d9793cee-row-5-field_66acdb831bff3' },
+        industryRepeaterTitlePattern: 'acf-field_66793d9793cee-row-5-field_66acdba41bff5-row-{N}-field_66acdbd41bff8',
+        industryRepeaterSubtitlePattern: 'acf-field_66793d9793cee-row-5-field_66acdba41bff5-row-{N}-field_66acdbc01bff7'
       },
       stepProcess: {
         title:       { label: 'Step Process Section Title:',       selector: '#acf-field_66793d9793cee-row-6-field_6a46079e8db41' },
