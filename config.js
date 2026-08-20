@@ -72,7 +72,8 @@ export const config = {
         pointsRepeaterSubtitlePattern: 'acf-field_66793d9793cee-row-3-field_66828bd234ad4-row-{N}-field_66828bfe34ad6'
       },
       industrySpecific: {
-        title: { label: 'Industry Section Title', selector: '#acf-field_66793d9793cee-row-5-field_66acdb831bff3' },
+        title: { label: 'Industry Section Title', selector: '#acf-field_66793d9793cee-row-5-field_66acdb8b1bff4' },
+        subtitle: { label: 'Industry Section Subtitle', selector: '#acf-field_66793d9793cee-row-5-field_66acdc52c52c4' },
         industryRepeaterTitlePattern: 'acf-field_66793d9793cee-row-5-field_66acdba41bff5-row-{N}-field_66acdbd41bff8',
         industryRepeaterSubtitlePattern: 'acf-field_66793d9793cee-row-5-field_66acdba41bff5-row-{N}-field_66acdbc01bff7'
       },

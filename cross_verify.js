@@ -1,4 +1,6 @@
-import { chromium } from 'playwright';
+import { chromium } from 'playwright-extra';
+import stealth from 'puppeteer-extra-plugin-stealth';
+chromium.use(stealth());
 import { parseFile } from './parser.js';
 import { config } from './config.js';
 import dotenv from 'dotenv';
