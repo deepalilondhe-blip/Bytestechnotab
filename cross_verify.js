@@ -250,9 +250,25 @@ async function updateMismatchedFields(page, mismatches) {
       const isVisible = await locator.isVisible();
 
       if (isVisible) {
-        await locator.click({ force: true }).catch(() => {});
-        await locator.fill('');                // clear first
-        await locator.fill(field.expected);   // fill exact doc value
+        // HIGHLIGHT
+        await locator.evaluate(el => {
+          el.setAttribute('data-original-bg', el.style.backgroundColor || '');
+          el.style.backgroundColor = 'yellow';
+          el.style.transition = 'background-color 0.3s';
+        }).catch(() => {});
+        
+        // PERFECT CLEAR
+        await locator.click({ force: true, clickCount: 3 }).catch(() => {});
+        await page.keyboard.press('Backspace').catch(() => {});
+        await locator.evaluate(el => { el.value = ''; }).catch(() => {});
+        
+        // EXACT PASTE
+        await locator.fill(field.expected);
+        
+        // UN-HIGHLIGHT
+        await locator.evaluate(el => {
+          el.style.backgroundColor = el.getAttribute('data-original-bg');
+        }).catch(() => {});
       } else {
         // Hidden/collapsed — write via JS and fire input/change events
         await locator.evaluate((el, val) => {
